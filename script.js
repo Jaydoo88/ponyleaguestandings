@@ -22,7 +22,7 @@ async function fetchAllResults() {
     const header = rows.shift().map(h => h.toLowerCase());
     const idx = Object.fromEntries(header.map((h,i)=>[h, i]));
 
-    // Validate expected columns
+    // Expected columns
     const needed = ['week','bowler1','g1','g2','g3','bowler2','h1','h2','h3'];
     const hasAll = needed.every(k => idx[k] !== undefined);
     if (!hasAll) { console.error('CSV header missing required columns:', header); return; }
@@ -48,10 +48,27 @@ async function fetchAllResults() {
 }
 
 // ---- Helpers ----
+
+// Build a results object containing only weeks <= selected week
+function resultsThroughWeek(weekNumber) {
+  const out = {};
+  for (const [w, matches] of Object.entries(weeklyResults)) {
+    if (parseInt(w,10) <= weekNumber) out[w] = matches;
+  }
+  return out;
+}
+
+// Compute standings (Points, Avg, High Game/Series, Total Pinfall)
 function computeStandingsFrom(resultsByWeek) {
   const map = new Map();
   const ensure = (name) => {
-    if (!map.has(name)) map.set(name, { name, points: 0, games: [], series: [] });
+    if (!map.has(name)) map.set(name, { 
+      name, 
+      points: 0, 
+      games: [], 
+      series: [], 
+      totalPinfall: 0 
+    });
     return map.get(name);
   };
 
@@ -65,14 +82,20 @@ function computeStandingsFrom(resultsByWeek) {
         else if (scores2[i] > scores1[i]) b.points++;
       }
 
-      // series point
+      // series sums
       const s1 = scores1.reduce((x,y)=>x+y,0);
       const s2 = scores2.reduce((x,y)=>x+y,0);
+
+      // series point
       if (s1 > s2) a.points++; else if (s2 > s1) b.points++;
 
       // stats
       a.games.push(...scores1); b.games.push(...scores2);
       a.series.push(s1);        b.series.push(s2);
+
+      // total pinfall (sum of all games across weeks)
+      a.totalPinfall += s1;
+      b.totalPinfall += s2;
     });
   });
 
@@ -81,17 +104,15 @@ function computeStandingsFrom(resultsByWeek) {
     const avg = p.games.length ? Math.round(total / p.games.length) : 0;
     const highG = p.games.length ? Math.max(...p.games) : 0;
     const highS = p.series.length ? Math.max(...p.series) : 0;
-    return { name: p.name, points: p.points, avg, highGame: highG, highSeries: highS };
+    return { 
+      name: p.name, 
+      points: p.points, 
+      avg, 
+      highGame: highG, 
+      highSeries: highS,
+      totalPinfall: p.totalPinfall
+    };
   }).sort((a,b) => b.points - a.points);
-}
-
-// Return a results object containing only weeks <= selected week
-function resultsThroughWeek(weekNumber) {
-  const out = {};
-  for (const [w, matches] of Object.entries(weeklyResults)) {
-    if (parseInt(w,10) <= weekNumber) out[w] = matches;
-  }
-  return out;
 }
 
 // ---- UI ----
@@ -108,7 +129,9 @@ function populateWeekSelectors() {
 
   [currentWeekSelect, weekSelect].forEach(sel => {
     if (!sel) return;
-    sel.innerHTML = weeks.map(w => `<option value="${w}" ${w===maxWeek?'selected':''}>Week ${w}${w===maxWeek?' (Current)':''}</option>`).join('');
+    sel.innerHTML = weeks
+      .map(w => `<option value="${w}" ${w===maxWeek?'selected':''}>Week ${w}${w===maxWeek?' (Current)':''}</option>`)
+      .join('');
   });
 }
 
@@ -116,6 +139,7 @@ function updateStandings() {
   const tbody = document.getElementById('standingsBody');
   if (!tbody) return;
 
+  // cumulative THROUGH the selected week
   const sel = document.getElementById('currentWeek');
   const upToWeek = parseInt(sel?.value || currentWeek, 10);
 
@@ -136,7 +160,7 @@ function updateStandings() {
       <td>${bowler.avg}</td>
       <td>${bowler.highGame}</td>
       <td>${bowler.highSeries}</td>
-      <td>${bowler.totalPinfall}</td>  <!-- NEW -->
+      <td>${bowler.totalPinfall}</td>
     `;
     tbody.appendChild(row);
   });
