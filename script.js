@@ -25,10 +25,7 @@ async function fetchAllResults() {
     // Validate expected columns
     const needed = ['week','bowler1','g1','g2','g3','bowler2','h1','h2','h3'];
     const hasAll = needed.every(k => idx[k] !== undefined);
-    if (!hasAll) {
-      console.error('CSV header missing required columns:', header);
-      return;
-    }
+    if (!hasAll) { console.error('CSV header missing required columns:', header); return; }
 
     for (const r of rows) {
       const w = String(r[idx.week]);
@@ -50,7 +47,7 @@ async function fetchAllResults() {
   }
 }
 
-// ---- Standings Computation ----
+// ---- Helpers ----
 function computeStandingsFrom(resultsByWeek) {
   const map = new Map();
   const ensure = (name) => {
@@ -88,7 +85,16 @@ function computeStandingsFrom(resultsByWeek) {
   }).sort((a,b) => b.points - a.points);
 }
 
-// ---- UI Helpers ----
+// Return a results object containing only weeks <= selected week
+function resultsThroughWeek(weekNumber) {
+  const out = {};
+  for (const [w, matches] of Object.entries(weeklyResults)) {
+    if (parseInt(w,10) <= weekNumber) out[w] = matches;
+  }
+  return out;
+}
+
+// ---- UI ----
 function populateWeekSelectors() {
   const weeks = Object.keys(weeklyResults).map(n => parseInt(n,10)).filter(n=>!Number.isNaN(n));
   if (!weeks.length) return;
@@ -110,7 +116,17 @@ function updateStandings() {
   const tbody = document.getElementById('standingsBody');
   if (!tbody) return;
 
-  const computed = computeStandingsFrom(weeklyResults);
+  // cumulative THROUGH the selected week
+  const sel = document.getElementById('currentWeek');
+  const upToWeek = parseInt(sel?.value || currentWeek, 10);
+
+  const filtered = resultsThroughWeek(upToWeek);
+  const computed = computeStandingsFrom(filtered);
+
+  // optional caption if you added <p id="standingsCaption"></p> under the H2
+  const cap = document.getElementById('standingsCaption');
+  if (cap) cap.textContent = `Standings through Week ${upToWeek}`;
+
   tbody.innerHTML = '';
   computed.forEach((bowler, index) => {
     const row = document.createElement('tr');
@@ -210,10 +226,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadWeeklyResults();
 
   const cw = document.getElementById('currentWeek');
-  if (cw) cw.addEventListener('change', e => {
-    const v = parseInt(e.target.value, 10);
-    if (!Number.isNaN(v)) currentWeek = v;
+  if (cw) cw.addEventListener('change', () => {
+    currentWeek = parseInt(cw.value, 10);
+    updateStandings(); // recompute standings through selected week
   });
+
+  const ws = document.getElementById('weekSelect');
+  if (ws) ws.addEventListener('change', loadWeeklyResults);
 });
 
 // Expose for HTML
