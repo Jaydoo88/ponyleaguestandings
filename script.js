@@ -116,14 +116,12 @@ function updateStandings() {
   const tbody = document.getElementById('standingsBody');
   if (!tbody) return;
 
-  // cumulative THROUGH the selected week
   const sel = document.getElementById('currentWeek');
   const upToWeek = parseInt(sel?.value || currentWeek, 10);
 
   const filtered = resultsThroughWeek(upToWeek);
   const computed = computeStandingsFrom(filtered);
 
-  // optional caption if you added <p id="standingsCaption"></p> under the H2
   const cap = document.getElementById('standingsCaption');
   if (cap) cap.textContent = `Standings through Week ${upToWeek}`;
 
@@ -138,6 +136,7 @@ function updateStandings() {
       <td>${bowler.avg}</td>
       <td>${bowler.highGame}</td>
       <td>${bowler.highSeries}</td>
+      <td>${bowler.totalPinfall}</td>  <!-- NEW -->
     `;
     tbody.appendChild(row);
   });
