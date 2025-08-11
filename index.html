@@ -32,6 +32,15 @@
 
   <!-- Stylesheet -->
   <link rel="stylesheet" href="styles.css"/>
+
+  <!-- Supabase Client -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script>
+    window.supabaseClient = supabase.createClient(
+      'https://YOUR_PROJECT_REF.supabase.co',
+      'YOUR_PUBLIC_ANON_KEY'
+    );
+  </script>
 </head>
 <body>
   <div class="container">
