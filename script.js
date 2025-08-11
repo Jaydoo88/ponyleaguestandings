@@ -1,10 +1,7 @@
 // ===============================
-// CONFIG: paste your Google Sheet CSV URL here
-// Publish your sheet: File -> Share -> Publish to web -> CSV link for Sheet1
-// Columns required (header row): week,bowler1,g1,g2,g3,bowler2,h1,h2,h3
-// Example URL: https://docs.google.com/spreadsheets/d/XXXX/pub?output=csv
+// CONFIG: Google Sheet CSV URL
 // ===============================
-const CSV_URL = 'PASTE_YOUR_CSV_LINK_HERE';
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS2B7Nwb1-bJ-hxu7Py10mcjPNURFulI2R-GDsMA4WnUOQmBxGLmtKBbUXpcw2njhS8flvRotMoPOUR/pub?gid=0&single=true&output=csv';
 
 // State
 let weeklyResults = {}; // { "1": [ {bowler1, scores1:[..], bowler2, scores2:[..]} ], ... }
