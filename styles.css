@@ -221,3 +221,64 @@ h1 {
 }
 
 .info-card h3 { color: #ffd700; margin-bottom: 10px; font-size: 1.3em; }
+/* ----- Mobile fixes ----- */
+@media (max-width: 640px) {
+  .container { padding: 12px; }
+
+  /* Let cards scroll their content instead of clipping */
+  .card { overflow: visible; padding: 16px; }
+
+  /* Make big tables scroll horizontally on small screens */
+  .standings-table,
+  .results-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;           /* enables side-scroll */
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;        /* keep columns on one line */
+    border-radius: 10px;
+  }
+
+  /* Keep table header/footer readable */
+  .standings-table th, .standings-table td,
+  .results-table th, .results-table td {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  /* Week selector & tabs wrap nicely */
+  .week-selector {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .week-selector label { margin-bottom: 4px; }
+  .week-selector select { min-width: 140px; }
+
+  .nav-tabs {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .nav-tab {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+
+  /* Matchup cards: stack vertically instead of 3 columns */
+  .matchup-card {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 16px;
+  }
+  .vs-separator {
+    order: -1;           /* put VS between players neatly */
+    margin: 4px auto 0;
+  }
+
+  /* Scores pills shrink a bit */
+  .scores { gap: 6px; }
+  .score { padding: 4px 8px; font-size: 14px; }
+
+  /* Headings a touch smaller on mobile */
+  h1 { font-size: 1.8em; }
+  h2 { font-size: 1.2em; }
+}
