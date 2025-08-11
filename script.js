@@ -1,136 +1,59 @@
-// =======================
-// PonyLeagueStandings — Supabase-powered front-end
-// =======================
-
-// Supabase client from <head>
-const sb = window.supabaseClient;
+// ===============================
+// CONFIG: paste your Google Sheet CSV URL here
+// Publish your sheet: File -> Share -> Publish to web -> CSV link for Sheet1
+// Columns required (header row): week,bowler1,g1,g2,g3,bowler2,h1,h2,h3
+// Example URL: https://docs.google.com/spreadsheets/d/XXXX/pub?output=csv
+// ===============================
+const CSV_URL = 'PASTE_YOUR_CSV_LINK_HERE';
 
 // State
-let weeklyResults = {}; // { "1": [ {bowler1, scores1, bowler2, scores2}, ... ], ... }
-let currentWeek = 4;
+let weeklyResults = {}; // { "1": [ {bowler1, scores1:[..], bowler2, scores2:[..]} ], ... }
+let currentWeek = null;
 
-// ------------- Auth -------------
-async function sendMagicLink() {
-  const emailEl = document.getElementById('adminEmail');
-  const email = emailEl ? emailEl.value.trim() : '';
-  if (!email) return showMessage('Enter a valid email address.', 'error');
-
-  const { error } = await sb.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: window.location.origin }
-  });
-  if (error) return showMessage(error.message, 'error');
-  showMessage('Login link sent. Check your email.', 'success');
-}
-
-async function adminLogout() {
-  await sb.auth.signOut();
-  toggleAdminUI(false);
-  showMessage('Logged out.', 'success');
-}
-
-function toggleAdminUI(isLoggedIn) {
-  const login = document.getElementById('adminLogin');
-  const panel = document.getElementById('adminPanel');
-  if (login) login.style.display = isLoggedIn ? 'none' : 'block';
-  if (panel) panel.style.display = isLoggedIn ? 'block' : 'none';
-}
-
-// ------------- Data I/O -------------
+// ---- CSV Loader ----
 async function fetchAllResults() {
-  const { data, error } = await sb
-    .from('matches')
-    .select('*')
-    .order('week', { ascending: true })
-    .order('created_at', { ascending: true });
-
-  if (error) {
-    console.error('fetchAllResults error:', error);
-    showMessage('Could not load results.', 'error');
-    return;
-  }
-
   weeklyResults = {};
-  (data || []).forEach(row => {
-    const w = String(row.week);
-    if (!weeklyResults[w]) weeklyResults[w] = [];
-    weeklyResults[w].push({
-      bowler1: row.bowler1,
-      scores1: row.scores1,
-      bowler2: row.bowler2,
-      scores2: row.scores2
-    });
-  });
-}
+  try {
+    const res = await fetch(CSV_URL, { cache: 'no-store' });
+    if (!res.ok) throw new Error('Could not fetch CSV');
+    const text = await res.text();
 
-async function addMatchResult() {
-  // Require logged in
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) return showMessage('Please log in via the email link first.', 'error');
+    // Basic CSV parse (assumes no commas inside fields)
+    const rows = text.trim().split(/\r?\n/).map(r => r.split(',').map(s => s.trim()));
+    if (!rows.length) return;
 
-  const week = parseInt(document.getElementById('adminWeek').value, 10);
-  const bowler1 = document.getElementById('bowler1').value.trim();
-  const scores1Str = document.getElementById('scores1').value;
-  const bowler2 = document.getElementById('bowler2').value.trim();
-  const scores2Str = document.getElementById('scores2').value;
+    const header = rows.shift().map(h => h.toLowerCase());
+    const idx = Object.fromEntries(header.map((h,i)=>[h, i]));
 
-  if (!bowler1 || !scores1Str || !bowler2 || !scores2Str) {
-    return showMessage('Please fill in all fields.', 'error');
-  }
+    // Validate expected columns
+    const needed = ['week','bowler1','g1','g2','g3','bowler2','h1','h2','h3'];
+    const hasAll = needed.every(k => idx[k] !== undefined);
+    if (!hasAll) {
+      console.error('CSV header missing required columns:', header);
+      return;
+    }
 
-  const scores1 = scores1Str.split(',').map(s => parseInt(s.trim(), 10));
-  const scores2 = scores2Str.split(',').map(s => parseInt(s.trim(), 10));
-  if (scores1.length !== 3 || scores2.length !== 3 || scores1.some(isNaN) || scores2.some(isNaN)) {
-    return showMessage('Enter exactly 3 numbers per bowler (e.g., 245,210,188).', 'error');
-  }
+    for (const r of rows) {
+      const w = String(r[idx.week]);
+      const bowler1 = r[idx.bowler1];
+      const g1 = parseInt(r[idx.g1],10), g2 = parseInt(r[idx.g2],10), g3 = parseInt(r[idx.g3],10);
+      const bowler2 = r[idx.bowler2];
+      const h1 = parseInt(r[idx.h1],10), h2 = parseInt(r[idx.h2],10), h3 = parseInt(r[idx.h3],10);
+      if (!w || !bowler1 || !bowler2) continue;
+      if ([g1,g2,g3,h1,h2,h3].some(n => Number.isNaN(n))) continue;
 
-  const { error } = await sb.from('matches').insert({ week, bowler1, scores1, bowler2, scores2 });
-  if (error) {
-    console.error('addMatchResult error:', error);
-    return showMessage(error.message, 'error');
-  }
-
-  // Clear form
-  document.getElementById('bowler1').value = '';
-  document.getElementById('scores1').value = '';
-  document.getElementById('bowler2').value = '';
-  document.getElementById('scores2').value = '';
-
-  showMessage(`Match result added for Week ${week}!`, 'success');
-
-  await fetchAllResults();
-
-  // Update active tab
-  if (document.getElementById('weekly-results')?.classList.contains('active')) {
-    const weekSelect = document.getElementById('weekSelect');
-    if (weekSelect) weekSelect.value = String(week);
-    loadWeeklyResults();
-  }
-  if (document.getElementById('standings')?.classList.contains('active')) {
-    updateStandings();
+      if (!weeklyResults[w]) weeklyResults[w] = [];
+      weeklyResults[w].push({
+        bowler1, scores1: [g1,g2,g3],
+        bowler2, scores2: [h1,h2,h3]
+      });
+    }
+  } catch (e) {
+    console.error(e);
   }
 }
 
-// ------------- UI Logic -------------
-function showTab(tabName, btnEl) {
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(b => {
-    b.classList.remove('active');
-    b.setAttribute('aria-selected', 'false');
-  });
-
-  const tab = document.getElementById(tabName);
-  if (tab) tab.classList.add('active');
-
-  if (btnEl) {
-    btnEl.classList.add('active');
-    btnEl.setAttribute('aria-selected', 'true');
-  }
-
-  if (tabName === 'standings') updateStandings();
-  if (tabName === 'weekly-results') loadWeeklyResults();
-}
-
+// ---- Standings Computation ----
 function computeStandingsFrom(resultsByWeek) {
   const map = new Map();
   const ensure = (name) => {
@@ -168,6 +91,24 @@ function computeStandingsFrom(resultsByWeek) {
   }).sort((a,b) => b.points - a.points);
 }
 
+// ---- UI Helpers ----
+function populateWeekSelectors() {
+  const weeks = Object.keys(weeklyResults).map(n => parseInt(n,10)).filter(n=>!Number.isNaN(n));
+  if (!weeks.length) return;
+
+  weeks.sort((a,b)=>a-b);
+  const maxWeek = weeks[weeks.length - 1];
+  currentWeek = maxWeek;
+
+  const currentWeekSelect = document.getElementById('currentWeek');
+  const weekSelect = document.getElementById('weekSelect');
+
+  [currentWeekSelect, weekSelect].forEach(sel => {
+    if (!sel) return;
+    sel.innerHTML = weeks.map(w => `<option value="${w}" ${w===maxWeek?'selected':''}>Week ${w}${w===maxWeek?' (Current)':''}</option>`).join('');
+  });
+}
+
 function updateStandings() {
   const tbody = document.getElementById('standingsBody');
   if (!tbody) return;
@@ -194,7 +135,7 @@ function loadWeeklyResults() {
   const content = document.getElementById('weeklyResultsContent');
   if (!content) return;
 
-  const selectedWeek = weekSelect ? (weekSelect.value || String(currentWeek)) : String(currentWeek);
+  const selectedWeek = weekSelect?.value || String(currentWeek);
   const results = weeklyResults[selectedWeek] || [];
 
   if (!results.length) {
@@ -244,38 +185,39 @@ function loadWeeklyResults() {
   content.innerHTML = html;
 }
 
-function showMessage(message, type) {
-  const messageDiv = document.getElementById('adminMessage');
-  if (!messageDiv) return;
-  messageDiv.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
-  setTimeout(() => { messageDiv.innerHTML = ''; }, 3000);
+// ---- Tabs ----
+function showTab(tabName, btnEl) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b => {
+    b.classList.remove('active');
+    b.setAttribute('aria-selected', 'false');
+  });
+
+  const tab = document.getElementById(tabName);
+  if (tab) tab.classList.add('active');
+
+  if (btnEl) {
+    btnEl.classList.add('active');
+    btnEl.setAttribute('aria-selected', 'true');
+  }
+
+  if (tabName === 'standings') updateStandings();
+  if (tabName === 'weekly-results') loadWeeklyResults();
 }
 
-// ------------- Init -------------
+// ---- Init ----
 document.addEventListener('DOMContentLoaded', async () => {
-  // Handle currentWeek selector (optional)
+  await fetchAllResults();
+  populateWeekSelectors();
+  updateStandings();
+  loadWeeklyResults();
+
   const cw = document.getElementById('currentWeek');
   if (cw) cw.addEventListener('change', e => {
     const v = parseInt(e.target.value, 10);
-    if (!isNaN(v)) currentWeek = v;
+    if (!Number.isNaN(v)) currentWeek = v;
   });
-
-  // Ensure session bootstrap (handles magic link return)
-  await sb.auth.getSession();
-
-  // Auth UI
-  const { data: { session } } = await sb.auth.getSession();
-  toggleAdminUI(!!session);
-  sb.auth.onAuthStateChange((_event, newSession) => toggleAdminUI(!!newSession));
-
-  // Load & render
-  await fetchAllResults();
-  updateStandings();
-  loadWeeklyResults();
 });
 
-// Expose functions used by inline HTML (buttons)
+// Expose for HTML
 window.showTab = showTab;
-window.sendMagicLink = sendMagicLink;
-window.addMatchResult = addMatchResult;
-window.adminLogout = adminLogout;
