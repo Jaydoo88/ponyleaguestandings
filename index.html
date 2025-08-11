@@ -10,7 +10,7 @@
   <!-- Theme Color for Mobile -->
   <meta name="theme-color" content="#0f3460" />
 
-  <!-- Open Graph (Facebook, etc.) -->
+  <!-- Open Graph -->
   <meta property="og:title" content="Pony League Standings — Jim Bungard Memorial" />
   <meta property="og:description" content="Live standings, weekly match results, key dates, and prize info for the Monday Night Winter Pony League." />
   <meta property="og:url" content="https://ponyleaguestandings.com/" />
@@ -26,21 +26,10 @@
   <meta name="twitter:description" content="Live standings, weekly results, and league info. Monday Night Winter League — scratch scoring only." />
   <meta name="twitter:image" content="https://ponyleaguestandings.com/og-image.png" />
 
-  <!-- Favicon -->
+  <!-- Favicon & Styles -->
   <link rel="icon" href="/assets/favicon.png" type="image/png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-
-  <!-- Stylesheet -->
   <link rel="stylesheet" href="styles.css"/>
-
-  <!-- Supabase Client -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script>
-    window.supabaseClient = supabase.createClient(
-      'https://pjqkllfdwhqnyrvrxhcc.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBqcWtsbGZkd2hxbnlydnJ4aGNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ5NDgwMzYsImV4cCI6MjA3MDUyNDAzNn0.puxbFSBcPldM99fAvKLwCgHPQg46t1DRXKYZgpcBBWY'
-  );
-  </script>
 </head>
 <body>
   <div class="container">
@@ -54,7 +43,6 @@
       <button class="nav-tab active" role="tab" aria-selected="true" onclick="showTab('standings', this)">Standings</button>
       <button class="nav-tab" role="tab" aria-selected="false" onclick="showTab('weekly-results', this)">Weekly Results</button>
       <button class="nav-tab" role="tab" aria-selected="false" onclick="showTab('league-info', this)">League Info</button>
-      <button class="nav-tab" role="tab" aria-selected="false" onclick="showTab('admin', this)">Admin</button>
     </nav>
 
     <!-- Standings Tab -->
@@ -63,12 +51,7 @@
         <h2>Current Standings</h2>
         <div class="week-selector">
           <label for="currentWeek">Current Week:</label>
-          <select id="currentWeek">
-            <option value="1">Week 1</option>
-            <option value="2">Week 2</option>
-            <option value="3">Week 3</option>
-            <option value="4" selected>Week 4</option>
-          </select>
+          <select id="currentWeek"></select>
         </div>
         <table class="standings-table">
           <thead>
@@ -92,12 +75,7 @@
         <h2>Weekly Results</h2>
         <div class="week-selector">
           <label for="weekSelect">Select Week:</label>
-          <select id="weekSelect" onchange="loadWeeklyResults()">
-            <option value="4">Week 4 (Current)</option>
-            <option value="3">Week 3</option>
-            <option value="2">Week 2</option>
-            <option value="1">Week 1</option>
-          </select>
+          <select id="weekSelect" onchange="loadWeeklyResults()"></select>
         </div>
         <div id="weeklyResultsContent"></div>
       </div>
@@ -113,81 +91,24 @@
           <p><strong>Points:</strong> 4 points per week (1 per game + 1 for series)</p>
           <p><strong>Qualification:</strong> Averages 200+ competitive</p>
         </div>
-
         <div class="info-card">
           <h3>Key Dates</h3>
           <p><strong>Position Round #1:</strong> Week 18 - December 22, 2025</p>
           <p><strong>Position Round #2:</strong> Week 36 - May 18, 2026</p>
           <p><strong>Roll-Offs:</strong> Immediately after Week 36</p>
         </div>
-
         <div class="info-card">
           <h3>Prize Structure</h3>
           <p><strong>Top 5 Roll-Off Finalists:</strong> $3,600</p>
           <p><strong>Total Prize Pool:</strong> $5,400 (based on 30 bowlers)</p>
           <p><strong>Top 15 Paid Out</strong> - Huge prize jump for Top 5!</p>
         </div>
-
         <div class="info-card">
           <h3>Roll-Off Qualification</h3>
           <p>1. Position Round #1 Winner</p>
           <p>2. Position Round #2 Winner</p>
           <p>3. Highest Total Pinfall (36 weeks)</p>
           <p>4-5. Top Two Points Scorers (season total)</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Admin Tab -->
-    <div id="admin" class="tab-content" role="tabpanel">
-      <div id="adminLogin" class="admin-login card">
-        <h2>Admin Access</h2>
-        <div class="form-group">
-          <label for="adminPassword">Password:</label>
-          <input type="password" id="adminPassword" placeholder="Enter admin password"/>
-        </div>
-        <button class="btn" onclick="adminLogin()">Login</button>
-      </div>
-
-      <div id="adminPanel" class="card" style="display: none;">
-        <h2>Admin Panel</h2>
-        <div id="adminMessage"></div>
-
-        <h3>Add Weekly Results</h3>
-        <div class="form-group">
-          <label for="adminWeek">Week Number:</label>
-          <select id="adminWeek">
-            <option value="1">Week 1</option>
-            <option value="2">Week 2</option>
-            <option value="3">Week 3</option>
-            <option value="4">Week 4</option>
-            <option value="5">Week 5</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="bowler1">Bowler 1:</label>
-          <input type="text" id="bowler1" placeholder="Bowler name"/>
-        </div>
-
-        <div class="form-group">
-          <label for="scores1">Bowler 1 Scores (Game 1, Game 2, Game 3):</label>
-          <input type="text" id="scores1" placeholder="e.g., 245,210,188"/>
-        </div>
-
-        <div class="form-group">
-          <label for="bowler2">Bowler 2:</label>
-          <input type="text" id="bowler2" placeholder="Bowler name"/>
-        </div>
-
-        <div class="form-group">
-          <label for="scores2">Bowler 2 Scores (Game 1, Game 2, Game 3):</label>
-          <input type="text" id="scores2" placeholder="e.g., 201,225,195"/>
-        </div>
-
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <button class="btn" onclick="addMatchResult()">Add Match Result</button>
-          <button class="btn btn-danger" onclick="adminLogout()">Logout</button>
         </div>
       </div>
     </div>
