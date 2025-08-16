@@ -43,6 +43,7 @@
       <button class="nav-tab active" role="tab" aria-selected="true" onclick="showTab('standings', this)">Standings</button>
       <button class="nav-tab" role="tab" aria-selected="false" onclick="showTab('weekly-results', this)">Weekly Results</button>
       <button class="nav-tab" role="tab" aria-selected="false" onclick="showTab('league-info', this)">League Info</button>
+      <button class="nav-tab" role="tab" aria-selected="false" onclick="showTab('prize-structure', this)">Prize Structure</button>
     </nav>
 
     <!-- Standings Tab -->
@@ -114,7 +115,71 @@
         </div>
       </div>
     </div>
-  </div>
+  <!-- League Info Tab -->
+    <div id="league-info" class="tab-content" role="tabpanel">
+      <div class="league-info">
+        <!-- … your existing info-cards … -->
+      </div>
+    </div>
+
+    <!-- Prize Structure Tab -->
+    <div id="prize-structure" class="tab-content" role="tabpanel" aria-labelledby="tab-prize-structure">
+      <div class="card">
+        <h2>💰 Prize Structure <span class="money-note">(30 Bowlers = $5,400 Collected)</span></h2>
+
+        <div class="prize-summary">
+          <div><strong>🏆 Top 5 Roll-Off Finalists:</strong> $3,600</div>
+          <div><strong>🎖 Season Points Leaders (6th–15th):</strong> $1,700</div>
+          <div><strong>🛠 Admin Fee:</strong> $100</div>
+        </div>
+
+        <!-- Roll-Offs Table -->
+        <h3 class="prize-subhead">🏆 Top 5 Roll-Off Finalists — $3,600</h3>
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>Place</th>
+              <th>Prize</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>🥇 1st</td><td>$1,500</td></tr>
+            <tr><td>🥈 2nd</td><td>$850</td></tr>
+            <tr><td>🥉 3rd</td><td>$600</td></tr>
+            <tr><td>4th</td><td>$400</td></tr>
+            <tr><td>5th</td><td>$250</td></tr>
+          </tbody>
+        </table>
+
+        <!-- Season Points Leaders Table -->
+        <h3 class="prize-subhead">🎖 Season Points Leaders (6th–15th Place) — $1,700</h3>
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>Place</th>
+              <th>Prize</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>6th</td><td>$175</td></tr>
+            <tr><td>7th</td><td>$165</td></tr>
+            <tr><td>8th</td><td>$160</td></tr>
+            <tr><td>9th</td><td>$155</td></tr>
+            <tr><td>10th</td><td>$150</td></tr>
+            <tr><td>11th</td><td>$145</td></tr>
+            <tr><td>12th</td><td>$140</td></tr>
+            <tr><td>13th</td><td>$135</td></tr>
+            <tr><td>14th</td><td>$130</td></tr>
+            <tr><td>15th</td><td>$125</td></tr>
+          </tbody>
+        </table>
+
+        <div class="prize-total">
+          <strong>Total Prize Pool:</strong> $5,400 (based on 30 bowlers)
+        </div>
+      </div>
+    </div>
+  </div> <!-- closes .container -->
 
   <script defer src="script.js"></script>
 </body>
