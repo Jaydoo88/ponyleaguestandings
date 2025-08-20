@@ -44,6 +44,8 @@
       <button class="nav-tab" role="tab" aria-selected="false" onclick="showTab('weekly-results', this)">Weekly Results</button>
       <button class="nav-tab" role="tab" aria-selected="false" onclick="showTab('league-info', this)">League Info</button>
       <button class="nav-tab" role="tab" aria-selected="false" onclick="showTab('prize-structure', this)">Prize Structure</button>
+      <button class="nav-tab" role="tab" aria-selected="false" onclick="showTab('side-pots', this)">Side Pots</button>
+      <button class="nav-tab" role="tab" aria-selected="false" onclick="showTab('hcp-brackets', this)">HCP Brackets</button>
     </nav>
 
     <!-- Standings Tab -->
@@ -230,7 +232,41 @@
         </div>
       </div>
     </div>
-  </div> <!-- closes .container -->
+ <!-- Side Pots Tab -->
+<div id="side-pots" class="tab-content" role="tabpanel" aria-labelledby="tab-side-pots">
+  <div class="card">
+    <h2>Side Pots</h2>
+    <!-- Replace the src with your actual OneDrive EMBED link -->
+    <iframe
+      class="embed-frame"
+      src="https://onedrive.live.com/embed?resid=YOUR_SIDEPOTS_ID&authkey=YOUR_KEY&em=2"
+      width="100%"
+      height="400"
+      frameborder="0"
+      allowfullscreen
+      referrerpolicy="no-referrer-when-downgrade"
+    ></iframe>
+  </div>
+</div>
+
+<!-- HCP Brackets Tab -->
+<div id="hcp-brackets" class="tab-content" role="tabpanel" aria-labelledby="tab-hcp-brackets">
+  <div class="card">
+    <h2>HCP Brackets</h2>
+    <!-- Replace the src with your actual OneDrive EMBED link -->
+    <iframe
+      class="embed-frame"
+      src="https://onedrive.live.com/embed?resid=YOUR_BRACKETS_ID&authkey=YOUR_KEY&em=2"
+      width="100%"
+      height="400"
+      frameborder="0"
+      allowfullscreen
+      referrerpolicy="no-referrer-when-downgrade"
+    ></iframe>
+  </div>
+</div>
+ 
+</div> <!-- closes .container -->
 
   <script defer src="script.js"></script>
 </body>
