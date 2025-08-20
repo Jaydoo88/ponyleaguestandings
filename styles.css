@@ -284,7 +284,10 @@ h1 {
 }
 .embed-frame {
   width: 100%;
-  height: 60vh;        /* 60% of the viewport height */
-  min-height: 400px;   /* never shorter than 400px */
+  height: 80vh;     /* fills most of the screen */
+  min-height: 500px;
   border: 0;
+}
+@media (max-width: 640px) {
+  .embed-frame { height: 70vh; min-height: 420px; }
 }
