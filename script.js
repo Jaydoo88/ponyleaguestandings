@@ -261,12 +261,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Expose for HTML
 window.showTab = showTab;
 
-/* ===============================
-   WEEKLY PAIRINGS (add-only module)
-   - Uses your published Google Sheet CSV
-   - Scoped to #pairings only
-   - No globals leaked, no showTab changes
-================================= */
+/* ============================================
+   WEEKLY PAIRINGS (dropdown version, add-only)
+   - Loads from your published Google Sheet CSV
+   - Renders Bowler vs Bowler only
+   - Uses a "Select Week" dropdown (like Weekly Results)
+   - Hides future weeks by default
+   - Fully scoped to #pairings
+============================================ */
 (() => {
   // ---- CONFIG: your published CSV URL ----
   const PAIRINGS_CSV_URL =
@@ -287,7 +289,7 @@ window.showTab = showTab;
       if ((c === '\n' || c === '\r') && !inQ) {
         if (cell.length || row.length) { row.push(cell.trim()); rows.push(row); }
         cell = ''; row = [];
-        if (c === '\r' && n === '\n') i++;
+        if (c === '\r' && n === '\n') i++; // swallow CRLF
         continue;
       }
       cell += c;
@@ -298,13 +300,12 @@ window.showTab = showTab;
 
   async function initWeeklyPairings() {
     const root = document.getElementById('pairings');
-    if (!root) return; // section not in DOM
+    if (!root) return;
 
-    const toggleEl  = root.querySelector('#pairings-week-toggle');
-    const contentEl = root.querySelector('#pairings-content');
-    const errorEl   = root.querySelector('#pairings-error');
-
-    if (!toggleEl || !contentEl) return;
+    const toggleWrap = root.querySelector('#pairings-week-toggle');
+    const contentEl  = root.querySelector('#pairings-content');
+    const errorEl    = root.querySelector('#pairings-error');
+    if (!toggleWrap || !contentEl) return;
 
     try {
       const res = await fetch(PAIRINGS_CSV_URL, { cache: 'no-store' });
@@ -312,12 +313,12 @@ window.showTab = showTab;
       const csv = await res.text();
       const rows = parseCsvSafe(csv);
 
-      // Expect headers: Week, Bowler 1, Bowler 2 (case-insensitive)
+      // Expect header: Week, Bowler 1, Bowler 2
       const [header, ...data] = rows;
       if (!header || header.length < 3) {
         throw new Error('CSV headers must be: Week, Bowler 1, Bowler 2.');
       }
-      const h = header.map(v => (v || '').toLowerCase());
+      const h = header.map(x => (x || '').toLowerCase());
       const idxWeek = h.findIndex(x => x.includes('week'));
       const idxB1   = h.findIndex(x => x.includes('bowler') && x.includes('1'));
       const idxB2   = h.findIndex(x => x.includes('bowler') && x.includes('2'));
@@ -331,7 +332,7 @@ window.showTab = showTab;
         if (!r?.length) continue;
         const wRaw = (r[idxWeek] ?? '').trim();
         if (!wRaw) continue;
-        const week = Number(String(wRaw).replace(/[^\d]/g, '')) || 0; // supports "Week 3"
+        const week = Number(String(wRaw).replace(/[^\d]/g, '')) || 0; // allows "Week 3"
         const b1 = (r[idxB1] ?? '').trim();
         const b2 = (r[idxB2] ?? '').trim();
         (groups[week] ||= []).push({ b1, b2 });
@@ -340,7 +341,7 @@ window.showTab = showTab;
       const weeks = Object.keys(groups).map(Number).sort((a,b)=>a-b);
       if (!weeks.length) throw new Error('No pairings found.');
 
-      // Choose "current" week = last with at least one fully filled matchup
+      // Determine "current" week = last with at least one fully filled matchup
       const isFilled = m => {
         const bad = s => !s || s.toUpperCase() === 'TBD' || s === '-';
         return !bad(m.b1) && !bad(m.b2);
@@ -349,20 +350,30 @@ window.showTab = showTab;
       for (const w of weeks) if (groups[w].some(isFilled)) currentWeek = w;
       if (urlWeekParam && weeks.includes(+urlWeekParam)) currentWeek = +urlWeekParam;
 
-      // Build the week toggle
-      toggleEl.innerHTML = '';
-      weeks.forEach(week => {
-        const btn = document.createElement('button');
-        btn.className = 'week-btn';
-        btn.role = 'tab';
-        btn.setAttribute('aria-selected', week === currentWeek ? 'true' : 'false');
-        btn.setAttribute('aria-controls', `pairings-week-${week}`);
-        btn.textContent = `Week ${week}`;
-        btn.addEventListener('click', () => showWeek(week));
-        toggleEl.appendChild(btn);
-      });
+      // ---- Build the dropdown (replaces button row) ----
+      toggleWrap.innerHTML = '';
+      const label = document.createElement('label');
+      label.setAttribute('for', 'pairings-week-select');
+      label.textContent = 'Select Week:';
+      label.style.marginRight = '8px';
+      label.style.fontWeight = '600';
 
-      // Build content per week (bowler vs bowler only)
+      const weekSelect = document.createElement('select');
+      weekSelect.id = 'pairings-week-select';
+      weekSelect.className = 'week-select';
+      weeks.forEach(week => {
+        const opt = document.createElement('option');
+        opt.value = String(week);
+        opt.textContent = `Week ${week}`;
+        weekSelect.appendChild(opt);
+      });
+      weekSelect.value = String(currentWeek);
+      weekSelect.addEventListener('change', () => showWeek(Number(weekSelect.value)));
+
+      toggleWrap.appendChild(label);
+      toggleWrap.appendChild(weekSelect);
+
+      // ---- Build content (one table per week) ----
       contentEl.innerHTML = '';
       weeks.forEach(week => {
         const sec = document.createElement('section');
@@ -398,7 +409,7 @@ window.showTab = showTab;
         contentEl.appendChild(sec);
       });
 
-      // Hide future weeks by default
+      // Hide future weeks (> currentWeek) by default
       weeks.forEach(w => {
         if (w > currentWeek) {
           const sec = document.getElementById(`pairings-week-${w}`);
@@ -406,18 +417,19 @@ window.showTab = showTab;
         }
       });
 
-      // Local controller (no globals)
+      // ---- Local controller (no globals leaked) ----
       function showWeek(week) {
-        // update buttons
-        toggleEl.querySelectorAll('.week-btn').forEach(btn => {
-          btn.setAttribute('aria-selected', btn.textContent.endsWith(String(week)) ? 'true' : 'false');
-        });
+        // sync dropdown
+        const sel = document.getElementById('pairings-week-select');
+        if (sel) sel.value = String(week);
+
         // toggle sections
         weeks.forEach(w => {
           const sec = document.getElementById(`pairings-week-${w}`);
           if (sec) sec.hidden = (w !== week);
         });
-        // optional: keep URL in sync
+
+        // (optional) keep URL param in sync
         const usp = new URLSearchParams(location.search);
         usp.set('week', String(week));
         history.replaceState(null, '', `${location.pathname}?${usp.toString()}#pairings`);
@@ -425,14 +437,13 @@ window.showTab = showTab;
 
     } catch (err) {
       console.error(err);
-      const el = document.getElementById('pairings-error');
-      if (el) {
-        el.textContent = err.message || 'Failed to load Weekly Pairings.';
-        el.hidden = false;
+      if (errorEl) {
+        errorEl.textContent = err.message || 'Failed to load Weekly Pairings.';
+        errorEl.hidden = false;
       }
     }
   }
 
-  // Init on page load (independent of your showTab)
+  // Init once the DOM is ready (safe even if the tab is hidden)
   document.addEventListener('DOMContentLoaded', initWeeklyPairings);
 })();
