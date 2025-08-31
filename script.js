@@ -115,6 +115,28 @@ function computeStandingsFrom(resultsByWeek) {
   }).sort((a,b) => b.points - a.points);
 }
 
+// ---- Style injector (safe to keep or remove if you have these in CSS) ----
+function ensureWinTieStyles() {
+  if (document.getElementById('weekly-win-tie-styles')) return;
+  const style = document.createElement('style');
+  style.id = 'weekly-win-tie-styles';
+  style.textContent = `
+    .score-cell { padding: 4px 8px; text-align: center; border-radius: 4px; }
+    .score-cell.win { background: #2ecc71; color: #fff; font-weight: 700; }
+    .score-cell.tie { background: #f1c40f; color: #000; font-weight: 700; }
+    .series-label { font-weight: 700; margin-right: 6px; }
+    .series-wrap { display: inline-flex; gap: 6px; align-items: center; }
+  `;
+  document.head.appendChild(style);
+}
+
+// Compare scores → return class name
+function getScoreClass(a, b) {
+  if (a > b) return 'win';
+  if (a < b) return '';
+  return 'tie';
+}
+
 // ---- UI ----
 function populateWeekSelectors() {
   const weeks = Object.keys(weeklyResults).map(n => parseInt(n,10)).filter(n=>!Number.isNaN(n));
@@ -167,6 +189,8 @@ function updateStandings() {
 }
 
 function loadWeeklyResults() {
+  ensureWinTieStyles();
+
   const weekSelect = document.getElementById('weekSelect');
   const content = document.getElementById('weeklyResultsContent');
   if (!content) return;
@@ -188,18 +212,37 @@ function loadWeeklyResults() {
     for (let i=0;i<3;i++){
       if (match.scores1[i] > match.scores2[i]) points1++;
       else if (match.scores2[i] > match.scores1[i]) points2++;
+      // ties award no points here (league rule as previously coded)
     }
     if (series1 > series2) points1++; else if (series2 > series1) points2++;
+
+    // Build per-game score spans with win/tie classes
+    const row1Scores = match.scores1.map((s, i) => {
+      const cls = getScoreClass(Number(s), Number(match.scores2[i]));
+      return `<span class="score score-cell ${cls}">${s}</span>`;
+    }).join('');
+
+    const row2Scores = match.scores2.map((s, i) => {
+      const cls = getScoreClass(Number(s), Number(match.scores1[i]));
+      return `<span class="score score-cell ${cls}">${s}</span>`;
+    }).join('');
+
+    // Series class
+    const series1Cls = getScoreClass(series1, series2);
+    const series2Cls = getScoreClass(series2, series1);
 
     html += `
       <div class="matchup-card">
         <div class="bowler-info">
           <div class="bowler-name">${match.bowler1}</div>
           <div class="scores">
-            ${match.scores1.map(s=>`<span class="score">${s}</span>`).join('')}
+            ${row1Scores}
           </div>
           <div style="margin-top: 10px;">
-            <strong>Series: ${series1}</strong><br/>
+            <span class="series-wrap">
+              <span class="series-label">Series:</span>
+              <span class="score-cell ${series1Cls}">${series1}</span>
+            </span><br/>
             <span style="color: #ffd700;">Points: ${points1}</span>
           </div>
         </div>
@@ -207,10 +250,13 @@ function loadWeeklyResults() {
         <div class="bowler-info">
           <div class="bowler-name">${match.bowler2}</div>
           <div class="scores">
-            ${match.scores2.map(s=>`<span class="score">${s}</span>`).join('')}
+            ${row2Scores}
           </div>
           <div style="margin-top: 10px;">
-            <strong>Series: ${series2}</strong><br/>
+            <span class="series-wrap">
+              <span class="series-label">Series:</span>
+              <span class="score-cell ${series2Cls}">${series2}</span>
+            </span><br/>
             <span style="color: #ffd700;">Points: ${points2}</span>
           </div>
         </div>
