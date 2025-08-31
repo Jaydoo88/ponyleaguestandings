@@ -313,25 +313,26 @@ h1 {
   font-size: 0.95rem;
 }
 
-/* --- Week Selector (dropdown version) --- */
+/* --- Week Selector (dropdown, same look as Weekly Results) --- */
 #pairings .week-toggle-wrap {
   margin: 12px 0 20px;
 }
 
 #pairings label[for="pairings-week-select"] {
-  margin-right: 8px;
+  margin-right: 6px;
   font-weight: 600;
   opacity: 0.9;
 }
 
-#pairings .week-select {
-  padding: 8px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.25);
-  background: rgba(255,255,255,0.08);
-  color: inherit;
+#pairings #pairings-week-select {
   font: inherit;
+  color: #000;                  /* black text for dropdown like native */
+  background: #fff;             /* white background */
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  padding: 2px 6px;
   cursor: pointer;
+  appearance: auto;             /* ensure native dropdown arrow */
 }
 
 /* --- Pairings table --- */
