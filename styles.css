@@ -52,18 +52,27 @@ h1 {
 }
 
 .nav-tab {
-  padding: 12px 25px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 130px;              /* fixed consistent width */
+  padding: 12px 15px;        /* reduced side padding */
   background: rgba(255, 255, 255, 0.1);
   border: none;
   border-radius: 25px;
   color: white;
   cursor: pointer;
-  font-size: 1em;
+  font-size: 0.9em;          /* shrink font slightly */
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
+  text-align: center;
+  white-space: nowrap;       /* keep labels on one line */
 }
 
-.nav-tab:hover { background: rgba(255, 215, 0, 0.3); transform: translateY(-2px); }
+.nav-tab:hover {
+  background: rgba(255, 215, 0, 0.3);
+  transform: translateY(-2px);
+}
 
 .nav-tab.active {
   background: linear-gradient(45deg, #ffd700, #ffed4e);
@@ -71,12 +80,16 @@ h1 {
   font-weight: bold;
 }
 
-.tab-content { display: none; animation: fadeIn 0.5s ease-in; }
+.tab-content { 
+  display: none; 
+  animation: fadeIn 0.5s ease-in; 
+}
+
 .tab-content.active { display: block; }
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .card {
