@@ -265,9 +265,9 @@ window.showTab = showTab;
    WEEKLY PAIRINGS (dropdown version, add-only)
    - Loads from your published Google Sheet CSV
    - Renders Bowler vs Bowler only
-   - Uses a "Select Week" dropdown (like Weekly Results)
+   - Uses "Select Week:" native <select> (no "(Current)")
    - Hides future weeks by default
-   - Fully scoped to #pairings
+   - Fully scoped to #pairings; no globals leaked
 ============================================ */
 (() => {
   // ---- CONFIG: your published CSV URL ----
@@ -332,7 +332,7 @@ window.showTab = showTab;
         if (!r?.length) continue;
         const wRaw = (r[idxWeek] ?? '').trim();
         if (!wRaw) continue;
-        const week = Number(String(wRaw).replace(/[^\d]/g, '')) || 0; // allows "Week 3"
+        const week = Number(String(wRaw).replace(/[^\d]/g, '')) || 0; // handles "Week 3"
         const b1 = (r[idxB1] ?? '').trim();
         const b2 = (r[idxB2] ?? '').trim();
         (groups[week] ||= []).push({ b1, b2 });
@@ -350,17 +350,15 @@ window.showTab = showTab;
       for (const w of weeks) if (groups[w].some(isFilled)) currentWeek = w;
       if (urlWeekParam && weeks.includes(+urlWeekParam)) currentWeek = +urlWeekParam;
 
-      // ---- Build the dropdown (replaces button row) ----
+      // ---- Build the dropdown (matches Weekly Results look; no "(Current)") ----
       toggleWrap.innerHTML = '';
       const label = document.createElement('label');
       label.setAttribute('for', 'pairings-week-select');
       label.textContent = 'Select Week:';
-      label.style.marginRight = '8px';
-      label.style.fontWeight = '600';
+      toggleWrap.appendChild(label);
 
       const weekSelect = document.createElement('select');
       weekSelect.id = 'pairings-week-select';
-      weekSelect.className = 'week-select';
       weeks.forEach(week => {
         const opt = document.createElement('option');
         opt.value = String(week);
@@ -369,8 +367,6 @@ window.showTab = showTab;
       });
       weekSelect.value = String(currentWeek);
       weekSelect.addEventListener('change', () => showWeek(Number(weekSelect.value)));
-
-      toggleWrap.appendChild(label);
       toggleWrap.appendChild(weekSelect);
 
       // ---- Build content (one table per week) ----
