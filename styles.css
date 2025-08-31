@@ -297,3 +297,67 @@ h1 {
 @media (max-width: 640px) {
   .embed-frame { height: 70vh; min-height: 420px; }
 }
+/* === Weekly Pairings (scoped tweaks) === */
+#pairings .subhead { opacity: .85; margin-top: 6px; }
+
+.week-toggle-wrap {
+  margin: 12px 0 20px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.week-toggle {
+  display: inline-flex;
+  gap: 8px;
+  padding-bottom: 4px;
+  min-width: 100%;
+}
+
+.week-toggle .week-btn {
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.08);
+  padding: 8px 12px;
+  border-radius: 999px;
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.week-toggle .week-btn[aria-selected="true"] {
+  border-color: rgba(255,255,255,0.45);
+  background: rgba(255,255,255,0.18);
+}
+
+.pairings-week {
+  margin-bottom: 22px;
+}
+
+.pairings-week[hidden] { display: none !important; }
+
+/* Table keeps your existing look; just ensure narrow layout is clean */
+.pairings-table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.18);
+}
+
+.pairings-table th, .pairings-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+
+.pairing-vs {
+  text-align: center;
+  opacity: .75;
+  width: 64px;
+}
+
+.alert {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255,100,100,.35);
+  background: rgba(255,100,100,.12);
+  border-radius: 8px;
+}
