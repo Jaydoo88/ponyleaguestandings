@@ -297,36 +297,45 @@ h1 {
 @media (max-width: 640px) {
   .embed-frame { height: 70vh; min-height: 420px; }
 }
-/* === Weekly Pairings (scoped tweaks) === */
-#pairings .subhead { opacity: .85; margin-top: 6px; }
+/* === Weekly Pairings Styles === */
+#pairings {
+  padding: 10px 0;
+}
 
+#pairings header h1 {
+  font-size: 1.6rem;
+  margin-bottom: 4px;
+}
+
+#pairings .subhead {
+  opacity: .85;
+  margin-top: 6px;
+  font-size: 0.95rem;
+}
+
+/* --- Week Selector (dropdown version) --- */
 #pairings .week-toggle-wrap {
   margin: 12px 0 20px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
 }
 
-#pairings .week-toggle {
-  display: inline-flex;
-  gap: 8px;
-  padding-bottom: 4px;
-  min-width: 100%;
+#pairings label[for="pairings-week-select"] {
+  margin-right: 8px;
+  font-weight: 600;
+  opacity: 0.9;
 }
 
-#pairings .week-toggle .week-btn {
-  border: 1px solid rgba(255,255,255,0.25);
-  background: rgba(255,255,255,0.08);
+#pairings .week-select {
   padding: 8px 12px;
   border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.08);
+  color: inherit;
   font: inherit;
   cursor: pointer;
-  white-space: nowrap;
 }
 
-#pairings .week-toggle .week-btn[aria-selected="true"] {
-  border-color: rgba(255,255,255,0.45);
-  background: rgba(255,255,255,0.18);
-}
+/* --- Pairings table --- */
+#pairings .pairings-weeks { display: block; }
 
 #pairings .pairings-week { margin-bottom: 22px; }
 #pairings .pairings-week[hidden] { display: none !important; }
@@ -337,12 +346,19 @@ h1 {
   overflow: hidden;
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,0.18);
+  margin-top: 10px;
 }
 
 #pairings .pairings-table th,
 #pairings .pairings-table td {
   padding: 10px 12px;
   border-bottom: 1px solid rgba(255,255,255,0.12);
+  text-align: left;
+}
+
+#pairings .pairings-table thead th {
+  background: rgba(255,255,255,0.08);
+  font-weight: 700;
 }
 
 #pairings .pairing-vs {
@@ -351,10 +367,12 @@ h1 {
   width: 64px;
 }
 
+/* --- Error / alert box --- */
 #pairings .alert {
   margin-top: 16px;
   padding: 12px 14px;
   border: 1px solid rgba(255,100,100,.35);
   background: rgba(255,100,100,.12);
   border-radius: 8px;
+  font-size: 0.9rem;
 }
