@@ -260,3 +260,179 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Expose for HTML
 window.showTab = showTab;
+
+/* ===============================
+   WEEKLY PAIRINGS (add-only module)
+   - Uses your published Google Sheet CSV
+   - Scoped to #pairings only
+   - No globals leaked, no showTab changes
+================================= */
+(() => {
+  // ---- CONFIG: your published CSV URL ----
+  const PAIRINGS_CSV_URL =
+    'https://docs.google.com/spreadsheets/d/e/2PACX-1vS2B7Nwb1-bJ-hxu7Py10mcjPNURFulI2R-GDsMA4WnUOQmBxGLmtKBbUXpcw2njhS8flvRotMoPOUR/pub?gid=326412293&single=true&output=csv';
+
+  // Optional deep link (?week=7)
+  const urlWeekParam = new URLSearchParams(location.search).get('week');
+
+  // ---- tiny, quote-safe CSV parser ----
+  function parseCsvSafe(text) {
+    const rows = [];
+    let cell = '', row = [], inQ = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i], n = text[i+1];
+      if (c === '"' && !inQ) { inQ = true; continue; }
+      if (c === '"' && inQ)  { if (n === '"') { cell += '"'; i++; } else { inQ = false; } continue; }
+      if (c === ',' && !inQ) { row.push(cell.trim()); cell = ''; continue; }
+      if ((c === '\n' || c === '\r') && !inQ) {
+        if (cell.length || row.length) { row.push(cell.trim()); rows.push(row); }
+        cell = ''; row = [];
+        if (c === '\r' && n === '\n') i++;
+        continue;
+      }
+      cell += c;
+    }
+    if (cell.length || row.length) { row.push(cell.trim()); rows.push(row); }
+    return rows;
+  }
+
+  async function initWeeklyPairings() {
+    const root = document.getElementById('pairings');
+    if (!root) return; // section not in DOM
+
+    const toggleEl  = root.querySelector('#pairings-week-toggle');
+    const contentEl = root.querySelector('#pairings-content');
+    const errorEl   = root.querySelector('#pairings-error');
+
+    if (!toggleEl || !contentEl) return;
+
+    try {
+      const res = await fetch(PAIRINGS_CSV_URL, { cache: 'no-store' });
+      if (!res.ok) throw new Error('Could not fetch Weekly Pairings CSV.');
+      const csv = await res.text();
+      const rows = parseCsvSafe(csv);
+
+      // Expect headers: Week, Bowler 1, Bowler 2 (case-insensitive)
+      const [header, ...data] = rows;
+      if (!header || header.length < 3) {
+        throw new Error('CSV headers must be: Week, Bowler 1, Bowler 2.');
+      }
+      const h = header.map(v => (v || '').toLowerCase());
+      const idxWeek = h.findIndex(x => x.includes('week'));
+      const idxB1   = h.findIndex(x => x.includes('bowler') && x.includes('1'));
+      const idxB2   = h.findIndex(x => x.includes('bowler') && x.includes('2'));
+      if (idxWeek < 0 || idxB1 < 0 || idxB2 < 0) {
+        throw new Error('CSV headers must be: Week, Bowler 1, Bowler 2.');
+      }
+
+      // Group rows by numeric week
+      const groups = {};
+      for (const r of data) {
+        if (!r?.length) continue;
+        const wRaw = (r[idxWeek] ?? '').trim();
+        if (!wRaw) continue;
+        const week = Number(String(wRaw).replace(/[^\d]/g, '')) || 0; // supports "Week 3"
+        const b1 = (r[idxB1] ?? '').trim();
+        const b2 = (r[idxB2] ?? '').trim();
+        (groups[week] ||= []).push({ b1, b2 });
+      }
+
+      const weeks = Object.keys(groups).map(Number).sort((a,b)=>a-b);
+      if (!weeks.length) throw new Error('No pairings found.');
+
+      // Choose "current" week = last with at least one fully filled matchup
+      const isFilled = m => {
+        const bad = s => !s || s.toUpperCase() === 'TBD' || s === '-';
+        return !bad(m.b1) && !bad(m.b2);
+      };
+      let currentWeek = weeks[0];
+      for (const w of weeks) if (groups[w].some(isFilled)) currentWeek = w;
+      if (urlWeekParam && weeks.includes(+urlWeekParam)) currentWeek = +urlWeekParam;
+
+      // Build the week toggle
+      toggleEl.innerHTML = '';
+      weeks.forEach(week => {
+        const btn = document.createElement('button');
+        btn.className = 'week-btn';
+        btn.role = 'tab';
+        btn.setAttribute('aria-selected', week === currentWeek ? 'true' : 'false');
+        btn.setAttribute('aria-controls', `pairings-week-${week}`);
+        btn.textContent = `Week ${week}`;
+        btn.addEventListener('click', () => showWeek(week));
+        toggleEl.appendChild(btn);
+      });
+
+      // Build content per week (bowler vs bowler only)
+      contentEl.innerHTML = '';
+      weeks.forEach(week => {
+        const sec = document.createElement('section');
+        sec.id = `pairings-week-${week}`;
+        sec.className = 'pairings-week';
+        sec.hidden = (week !== currentWeek);
+
+        const table = document.createElement('table');
+        table.className = 'pairings-table';
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th>Bowler</th>
+              <th class="pairing-vs">vs</th>
+              <th>Bowler</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        `;
+
+        const tbody = table.querySelector('tbody');
+        groups[week].forEach(({ b1, b2 }) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${b1 || 'TBD'}</td>
+            <td class="pairing-vs">—</td>
+            <td>${b2 || 'TBD'}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        sec.appendChild(table);
+        contentEl.appendChild(sec);
+      });
+
+      // Hide future weeks by default
+      weeks.forEach(w => {
+        if (w > currentWeek) {
+          const sec = document.getElementById(`pairings-week-${w}`);
+          if (sec) sec.hidden = true;
+        }
+      });
+
+      // Local controller (no globals)
+      function showWeek(week) {
+        // update buttons
+        toggleEl.querySelectorAll('.week-btn').forEach(btn => {
+          btn.setAttribute('aria-selected', btn.textContent.endsWith(String(week)) ? 'true' : 'false');
+        });
+        // toggle sections
+        weeks.forEach(w => {
+          const sec = document.getElementById(`pairings-week-${w}`);
+          if (sec) sec.hidden = (w !== week);
+        });
+        // optional: keep URL in sync
+        const usp = new URLSearchParams(location.search);
+        usp.set('week', String(week));
+        history.replaceState(null, '', `${location.pathname}?${usp.toString()}#pairings`);
+      }
+
+    } catch (err) {
+      console.error(err);
+      const el = document.getElementById('pairings-error');
+      if (el) {
+        el.textContent = err.message || 'Failed to load Weekly Pairings.';
+        el.hidden = false;
+      }
+    }
+  }
+
+  // Init on page load (independent of your showTab)
+  document.addEventListener('DOMContentLoaded', initWeeklyPairings);
+})();
