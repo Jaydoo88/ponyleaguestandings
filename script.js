@@ -58,6 +58,17 @@ function resultsThroughWeek(weekNumber) {
   return out;
 }
 
+// (HALF-POINT TIE: core splitter)
+function splitPointsOnTie(a, b) {
+  if (a > b) return [1, 0];
+  if (b > a) return [0, 1];
+  return [0.5, 0.5];
+}
+
+function sum(arr) {
+  return (arr || []).reduce((t, n) => t + (Number(n) || 0), 0);
+}
+
 // Compute standings (Points, Avg, High Game/Series, Total Pinfall)
 function computeStandingsFrom(resultsByWeek) {
   const map = new Map();
@@ -76,18 +87,21 @@ function computeStandingsFrom(resultsByWeek) {
     (matches || []).forEach(({ bowler1, scores1, bowler2, scores2 }) => {
       const a = ensure(bowler1), b = ensure(bowler2);
 
-      // per-game points
+      // per-game points (HALF-POINT TIE)
       for (let i = 0; i < 3; i++) {
-        if (scores1[i] > scores2[i]) a.points++;
-        else if (scores2[i] > scores1[i]) b.points++;
+        const [pa, pb] = splitPointsOnTie(scores1[i], scores2[i]);
+        a.points += pa;
+        b.points += pb;
       }
 
       // series sums
       const s1 = scores1.reduce((x,y)=>x+y,0);
       const s2 = scores2.reduce((x,y)=>x+y,0);
 
-      // series point
-      if (s1 > s2) a.points++; else if (s2 > s1) b.points++;
+      // series point (HALF-POINT TIE)
+      const [sa, sb] = splitPointsOnTie(s1, s2);
+      a.points += sa; 
+      b.points += sb;
 
       // stats
       a.games.push(...scores1); b.games.push(...scores2);
@@ -178,7 +192,7 @@ function updateStandings() {
     row.innerHTML = `
       <td>${index + 1}</td>
       <td>${bowler.name}</td>
-      <td>${bowler.points}</td>
+      <td>${bowler.points.toFixed(1)}</td>  <!-- HALF-POINT TIE display -->
       <td>${bowler.avg}</td>
       <td>${bowler.highGame}</td>
       <td>${bowler.highSeries}</td>
@@ -208,13 +222,16 @@ function loadWeeklyResults() {
     const series1 = match.scores1.reduce((a,b)=>a+b,0);
     const series2 = match.scores2.reduce((a,b)=>a+b,0);
 
+    // (HALF-POINT TIE) per-game + series
     let points1 = 0, points2 = 0;
     for (let i=0;i<3;i++){
-      if (match.scores1[i] > match.scores2[i]) points1++;
-      else if (match.scores2[i] > match.scores1[i]) points2++;
-      // ties award no points here (league rule as previously coded)
+      const [p1, p2] = splitPointsOnTie(match.scores1[i], match.scores2[i]);
+      points1 += p1;
+      points2 += p2;
     }
-    if (series1 > series2) points1++; else if (series2 > series1) points2++;
+    const [sp1, sp2] = splitPointsOnTie(series1, series2);
+    points1 += sp1;
+    points2 += sp2;
 
     // Build per-game score spans with win/tie classes
     const row1Scores = match.scores1.map((s, i) => {
@@ -243,7 +260,7 @@ function loadWeeklyResults() {
               <span class="series-label">Series:</span>
               <span class="score-cell ${series1Cls}">${series1}</span>
             </span><br/>
-            <span style="color: #ffd700;">Points: ${points1}</span>
+            <span style="color: #ffd700;">Points: ${points1.toFixed(1)}</span>
           </div>
         </div>
         <div class="vs-separator">VS</div>
@@ -257,7 +274,7 @@ function loadWeeklyResults() {
               <span class="series-label">Series:</span>
               <span class="score-cell ${series2Cls}">${series2}</span>
             </span><br/>
-            <span style="color: #ffd700;">Points: ${points2}</span>
+            <span style="color: #ffd700;">Points: ${points2.toFixed(1)}</span>
           </div>
         </div>
       </div>
