@@ -126,7 +126,12 @@ function computeStandingsFrom(resultsByWeek) {
       highSeries: highS,
       totalPinfall: p.totalPinfall
     };
-  }).sort((a,b) => b.points - a.points);
+  }).sort((a, b) => {
+  // 1) Points (desc), 2) Total Pinfall (desc), 3) Name (asc)
+  if (b.points !== a.points) return b.points - a.points;
+  if (b.totalPinfall !== a.totalPinfall) return b.totalPinfall - a.totalPinfall;
+  return String(a.name).localeCompare(String(b.name));
+});
 }
 
 // ---- Style injector (safe to keep or remove if you have these in CSS) ----
