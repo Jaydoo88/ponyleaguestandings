@@ -69,6 +69,14 @@ function sum(arr) {
   return (arr || []).reduce((t, n) => t + (Number(n) || 0), 0);
 }
 
+// >>> NEW: read the selected standings week / fallback to global currentWeek
+function getSelectedStandingsWeek() {
+  const sel = document.getElementById('currentWeek');
+  if (sel && sel.value) return parseInt(sel.value, 10);
+  if (!Number.isNaN(currentWeek)) return parseInt(currentWeek, 10);
+  return null;
+}
+
 // Compute standings (Points, Avg, High Game/Series, Total Pinfall)
 function computeStandingsFrom(resultsByWeek) {
   const map = new Map();
@@ -127,11 +135,11 @@ function computeStandingsFrom(resultsByWeek) {
       totalPinfall: p.totalPinfall
     };
   }).sort((a, b) => {
-  // 1) Points (desc), 2) Total Pinfall (desc), 3) Name (asc)
-  if (b.points !== a.points) return b.points - a.points;
-  if (b.totalPinfall !== a.totalPinfall) return b.totalPinfall - a.totalPinfall;
-  return String(a.name).localeCompare(String(b.name));
-});
+    // 1) Points (desc), 2) Total Pinfall (desc), 3) Name (asc)
+    if (b.points !== a.points) return b.points - a.points;
+    if (b.totalPinfall !== a.totalPinfall) return b.totalPinfall - a.totalPinfall;
+    return String(a.name).localeCompare(String(b.name));
+  });
 }
 
 // ---- Style injector (safe to keep or remove if you have these in CSS) ----
@@ -371,6 +379,7 @@ window.showTab = showTab;
     if (!root) return;
 
     const toggleWrap = root.querySelector('#pairings-week-toggle');
+    theContent = null;
     const contentEl  = root.querySelector('#pairings-content');
     const errorEl    = root.querySelector('#pairings-error');
     if (!toggleWrap || !contentEl) return;
@@ -409,14 +418,24 @@ window.showTab = showTab;
       const weeks = Object.keys(groups).map(Number).sort((a,b)=>a-b);
       if (!weeks.length) throw new Error('No pairings found.');
 
-      // Determine "current" week = last with at least one fully filled matchup
-      const isFilled = m => {
-        const bad = s => !s || s.toUpperCase() === 'TBD' || s === '-';
-        return !bad(m.b1) && !bad(m.b2);
-      };
-      let currentWeek = weeks[0];
-      for (const w of weeks) if (groups[w].some(isFilled)) currentWeek = w;
-      if (urlWeekParam && weeks.includes(+urlWeekParam)) currentWeek = +urlWeekParam;
+      // >>> SYNC: Prefer the Standings' selected week; clamp to available pairings weeks
+      const standingsWeek = getSelectedStandingsWeek();
+      let currentWeek;
+      if (standingsWeek != null) {
+        const minW = weeks[0];
+        const maxW = weeks[weeks.length - 1];
+        currentWeek = Math.min(Math.max(standingsWeek, minW), maxW);
+      } else if (urlWeekParam && weeks.includes(+urlWeekParam)) {
+        currentWeek = +urlWeekParam; // fallback: explicit URL param
+      } else {
+        // final fallback: last week with at least one fully filled matchup
+        const isFilled = m => {
+          const bad = s => !s || s.toUpperCase() === 'TBD' || s === '-';
+          return !bad(m.b1) && !bad(m.b2);
+        };
+        currentWeek = weeks[0];
+        for (const w of weeks) if (groups[w].some(isFilled)) currentWeek = w;
+      }
 
       // ---- Build the dropdown (matches Weekly Results look; no "(Current)") ----
       toggleWrap.innerHTML = '';
@@ -497,6 +516,19 @@ window.showTab = showTab;
         const usp = new URLSearchParams(location.search);
         usp.set('week', String(week));
         history.replaceState(null, '', `${location.pathname}?${usp.toString()}#pairings`);
+      }
+
+      // >>> SYNC: update Pairings when Standings dropdown changes
+      const standingsSelect = document.getElementById('currentWeek');
+      if (standingsSelect) {
+        standingsSelect.addEventListener('change', () => {
+          const w = getSelectedStandingsWeek();
+          if (w == null) return;
+          const minW = weeks[0];
+          const maxW = weeks[weeks.length - 1];
+          const clamped = Math.min(Math.max(w, minW), maxW);
+          showWeek(clamped);
+        });
       }
 
     } catch (err) {
