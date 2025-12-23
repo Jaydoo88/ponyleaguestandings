@@ -234,6 +234,24 @@ h1 {
 }
 
 .info-card h3 { color: #ffd700; margin-bottom: 10px; font-size: 1.3em; }
+
+/* === Standings Footnote (First-Half Winner) === */
+.standings-footnote {
+  margin-top: 10px;
+  font-size: 0.95rem;
+  opacity: 0.9;
+}
+
+.standings-asterisk {
+  font-weight: 800;
+}
+
+/* Optional: highlight the first-half winner row/name */
+.winner-first-half {
+  font-weight: 800;
+  color: #ffd700;
+}
+
 /* ----- Mobile fixes ----- */
 @media (max-width: 640px) {
   .container { padding: 12px; }
@@ -307,9 +325,11 @@ h1 {
   height: 80vh;   /* fill most of screen height */
   border: none;
 }
+
 @media (max-width: 640px) {
   .embed-frame { height: 70vh; min-height: 420px; }
 }
+
 /* === Weekly Pairings Styles === */
 #pairings {
   padding: 10px 0;
