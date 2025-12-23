@@ -616,18 +616,19 @@ if (standingsWeek != null) {
         history.replaceState(null, '', `${location.pathname}?${usp.toString()}#pairings`);
       }
 
-      // >>> SYNC: update Pairings when Standings dropdown changes
-      const standingsSelect = document.getElementById('currentWeek');
-      if (standingsSelect) {
-        standingsSelect.addEventListener('change', () => {
-          const w = getSelectedStandingsWeek();
-          if (w == null) return;
-          const minW = weeks[0];
-          const maxW = weeks[weeks.length - 1];
-          const clamped = Math.min(Math.max(w, minW), maxW);
-          showWeek(clamped);
-        });
-      }
+      // >>> SYNC: update Pairings when Standings dropdown changes (Standings week + 1)
+const standingsSelect = document.getElementById('currentWeek');
+if (standingsSelect) {
+  standingsSelect.addEventListener('change', () => {
+    const w = getSelectedStandingsWeek();
+    if (w == null) return;
+    const minW = weeks[0];
+    const maxW = weeks[weeks.length - 1];
+    const plusOne = w + 1; // <-- key change
+    const clamped = Math.min(Math.max(plusOne, minW), maxW);
+    showWeek(clamped);
+  });
+}
 
     } catch (err) {
       console.error(err);
