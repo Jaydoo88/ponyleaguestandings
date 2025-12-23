@@ -48,11 +48,10 @@
       <button class="nav-tab" role="tab" aria-selected="false" onclick="showTab('side-pots', this)">Side Pots</button>
       <button class="nav-tab" role="tab" aria-selected="false" onclick="showTab('hcp-brackets', this)">HCP Brackets</button>
       <button class="nav-tab" role="tab" aria-selected="false" onclick="showTab('hcp-rev-brackets', this)">HCP Rev Brackets</button>
-<button class="nav-tab" role="tab" aria-selected="false" onclick="showTab('scr-brackets', this)">SCR Brackets</button>
-<button class="nav-tab" role="tab" aria-selected="false" onclick="showTab('payouts', this)">Weekly Payouts</button>
+      <button class="nav-tab" role="tab" aria-selected="false" onclick="showTab('scr-brackets', this)">SCR Brackets</button>
+      <button class="nav-tab" role="tab" aria-selected="false" onclick="showTab('payouts', this)">Weekly Payouts</button>
     </nav>
 
-    
     <!-- Standings Tab -->
     <div id="standings" class="tab-content active" role="tabpanel">
       <div class="card">
@@ -61,13 +60,15 @@
           <label for="currentWeek">Current Week:</label>
           <select id="currentWeek"></select>
         </div>
+
         <table class="standings-table">
           <thead>
             <tr>
               <th>Rank</th>
               <th>Bowler Name</th>
-              <th>Points</th>
-              <th>Avg</th>
+              <th>1st Half Pts</th>
+              <th>2nd Half Pts</th>
+              <th>Total Pts</th>
               <th>High Game</th>
               <th>High Series</th>
               <th>Total Pinfall</th>
@@ -75,6 +76,11 @@
           </thead>
           <tbody id="standingsBody"></tbody>
         </table>
+
+        <!-- Footnote -->
+        <div id="standingsFootnote" class="standings-footnote" aria-label="Standings footnote">
+          <span class="standings-asterisk">*</span> Winner – First Half
+        </div>
       </div>
     </div>
 
@@ -90,116 +96,116 @@
       </div>
     </div>
 
-   <!-- ===== Weekly Pairings ===== -->
-<section id="pairings" class="tab-content" role="tabpanel" aria-labelledby="tab-pairings" hidden>
-  <div class="container">
-    <header>
-      <h1>Weekly Pairings</h1>
-      <p class="subhead">Bowler vs. Bowler matchups by week</p>
-    </header>
+    <!-- ===== Weekly Pairings ===== -->
+    <section id="pairings" class="tab-content" role="tabpanel" aria-labelledby="tab-pairings" hidden>
+      <div class="container">
+        <header>
+          <h1>Weekly Pairings</h1>
+          <p class="subhead">Bowler vs. Bowler matchups by week</p>
+        </header>
 
-    <!-- Week Toggle Bar -->
-    <div class="week-toggle-wrap" role="tablist" aria-label="Pairings Week Selector">
-      <div id="pairings-week-toggle" class="week-toggle"></div>
-    </div>
+        <!-- Week Toggle Bar -->
+        <div class="week-toggle-wrap" role="tablist" aria-label="Pairings Week Selector">
+          <div id="pairings-week-toggle" class="week-toggle"></div>
+        </div>
 
-    <!-- Pairings Content -->
-    <div id="pairings-content" class="pairings-weeks"></div>
+        <!-- Pairings Content -->
+        <div id="pairings-content" class="pairings-weeks"></div>
 
-    <!-- Fallback / Errors -->
-    <div id="pairings-error" class="alert" hidden></div>
-  </div>
-</section>
-    
+        <!-- Fallback / Errors -->
+        <div id="pairings-error" class="alert" hidden></div>
+      </div>
+    </section>
+
     <!-- League Info Tab -->
-<div id="league-info" class="tab-content" role="tabpanel">
-  <div class="league-info">
-    <!-- 🎳 League Format & Weekly Matchups -->
-    <div class="info-card">
-      <h3>🎳 League Format & Weekly Matchups</h3>
-      <ul>
-        <li><strong>Individual Format:</strong> Each bowler competes as an individual (1 bowler = 1 team).</li>
-        <li><strong>Scheduled Matchups:</strong> Weekly matchups are announced in advance so bowlers know who they’ll face each week.</li>
-        <li><strong>Opponent Variety:</strong> The schedule is built to minimize repeat opponents — each bowler faces most others only once during the season.</li>
-      </ul>
-    </div>
+    <div id="league-info" class="tab-content" role="tabpanel">
+      <div class="league-info">
+        <!-- 🎳 League Format & Weekly Matchups -->
+        <div class="info-card">
+          <h3>🎳 League Format & Weekly Matchups</h3>
+          <ul>
+            <li><strong>Individual Format:</strong> Each bowler competes as an individual (1 bowler = 1 team).</li>
+            <li><strong>Scheduled Matchups:</strong> Weekly matchups are announced in advance so bowlers know who they’ll face each week.</li>
+            <li><strong>Opponent Variety:</strong> The schedule is built to minimize repeat opponents — each bowler faces most others only once during the season.</li>
+          </ul>
+        </div>
 
-    <!-- 🧮 Weekly Scoring System (Scratch Only) -->
-    <div class="info-card">
-      <h3>🧮 Weekly Scoring System (Scratch Only)</h3>
-      <p><strong>Points Available:</strong> 4 points maximum each week:</p>
-      <ul>
-        <li>1 point per game (3 games)</li>
-        <li>1 point for total series (3-game scratch total)</li>
-      </ul>
-    </div>
+        <!-- 🧮 Weekly Scoring System (Scratch Only) -->
+        <div class="info-card">
+          <h3>🧮 Weekly Scoring System (Scratch Only)</h3>
+          <p><strong>Points Available:</strong> 4 points maximum each week:</p>
+          <ul>
+            <li>1 point per game (3 games)</li>
+            <li>1 point for total series (3-game scratch total)</li>
+          </ul>
+        </div>
 
-    <!-- 🚫 Absentee & Makeup Policy -->
-    <div class="info-card">
-      <h3>🚫 Absentee & Makeup Policy</h3>
-      <ul>
-        <li><strong>Absent Bowler Rule:</strong> If a bowler is absent and does not pre-bowl or submit a makeup score, their score for the week will be their current scratch average minus 10 pins.</li>
-        <li><strong>Minimum Rule Enforcement:</strong> No absentee score can be lower than 160, regardless of average.</li>
-        <li><strong>Makeup/Pre-Bowl Deadline:</strong> Scores must be submitted to Jeff before the next league night.</li>
-        <li><strong>Payment Delinquency:</strong> Any bowler more than 4 weeks behind on payments will be disqualified from the league.</li>
-      </ul>
-    </div>
+        <!-- 🚫 Absentee & Makeup Policy -->
+        <div class="info-card">
+          <h3>🚫 Absentee & Makeup Policy</h3>
+          <ul>
+            <li><strong>Absent Bowler Rule:</strong> If a bowler is absent and does not pre-bowl or submit a makeup score, their score for the week will be their current scratch average minus 10 pins.</li>
+            <li><strong>Minimum Rule Enforcement:</strong> No absentee score can be lower than 160, regardless of average.</li>
+            <li><strong>Makeup/Pre-Bowl Deadline:</strong> Scores must be submitted to Jeff before the next league night.</li>
+            <li><strong>Payment Delinquency:</strong> Any bowler more than 4 weeks behind on payments will be disqualified from the league.</li>
+          </ul>
+        </div>
 
-    <!-- 🔁 Replacement & Dropout Policy -->
-    <div class="info-card">
-      <h3>🔁 Replacement & Dropout Policy</h3>
-      <ul>
-        <li>If a bowler needs to drop out mid-season, they may designate a replacement to finish their season.</li>
-        <li>The replacement must be approved by Jeff.</li>
-        <li>The new bowler will continue in the same standings slot, with no loss of points to the original player.</li>
-      </ul>
-    </div>
+        <!-- 🔁 Replacement & Dropout Policy -->
+        <div class="info-card">
+          <h3>🔁 Replacement & Dropout Policy</h3>
+          <ul>
+            <li>If a bowler needs to drop out mid-season, they may designate a replacement to finish their season.</li>
+            <li>The replacement must be approved by Jeff.</li>
+            <li>The new bowler will continue in the same standings slot, with no loss of points to the original player.</li>
+          </ul>
+        </div>
 
-    <!-- 📅 Key Dates -->
-    <div class="info-card">
-      <h3>📅 Key Dates</h3>
-      <ul>
-        <li><strong>Position Round #1:</strong> Week 18 – December 22, 2025</li>
-        <li><strong>Position Round #2:</strong> Week 36 – May 18, 2026</li>
-        <li><strong>Season-End Roll-Offs:</strong> Immediately after Week 36</li>
-      </ul>
-      <p><strong>Entry Fee:</strong> $5 per week — the full $180 must be paid in full by Week 9 (no exceptions).</p>
-    </div>
+        <!-- 📅 Key Dates -->
+        <div class="info-card">
+          <h3>📅 Key Dates</h3>
+          <ul>
+            <li><strong>Position Round #1:</strong> Week 18 – December 22, 2025</li>
+            <li><strong>Position Round #2:</strong> Week 36 – May 18, 2026</li>
+            <li><strong>Season-End Roll-Offs:</strong> Immediately after Week 36</li>
+          </ul>
+          <p><strong>Entry Fee:</strong> $5 per week — the full $180 must be paid in full by Week 9 (no exceptions).</p>
+        </div>
 
-    <!-- 🏆 Roll-Off Qualification Rules -->
-    <div class="info-card">
-      <h3>🏆 Roll-Off Qualification Rules</h3>
-      <p><strong>The Top 5 Bowlers</strong> qualify for the season-ending Roll-Offs, based on the following:</p>
-      <ol>
-        <li><strong>Position Round #1 Winner</strong></li>
-        <li><strong>Position Round #2 Winner</strong><br><small>(If the same bowler wins both, the next highest point scorer in that round qualifies.)</small></li>
-        <li><strong>Highest Total Pinfall</strong> across all 36 weeks <small>(excludes bowlers already qualified)</small></li>
-        <li><strong>Top Two Point Scorers</strong> over the full season <small>(excludes bowlers already qualified)</small></li>
-      </ol>
-      <p><strong>Seeding:</strong> Based on total points earned during the season. Tie-breaker is total pins for the season.</p>
-    </div>
+        <!-- 🏆 Roll-Off Qualification Rules -->
+        <div class="info-card">
+          <h3>🏆 Roll-Off Qualification Rules</h3>
+          <p><strong>The Top 5 Bowlers</strong> qualify for the season-ending Roll-Offs, based on the following:</p>
+          <ol>
+            <li><strong>Position Round #1 Winner</strong></li>
+            <li><strong>Position Round #2 Winner</strong><br><small>(If the same bowler wins both, the next highest point scorer in that round qualifies.)</small></li>
+            <li><strong>Highest Total Pinfall</strong> across all 36 weeks <small>(excludes bowlers already qualified)</small></li>
+            <li><strong>Top Two Point Scorers</strong> over the full season <small>(excludes bowlers already qualified)</small></li>
+          </ol>
+          <p><strong>Seeding:</strong> Based on total points earned during the season. Tie-breaker is total pins for the season.</p>
+        </div>
 
-    <!-- 🎯 Roll-Off Format (Stepladder) -->
-    <div class="info-card">
-      <h3>🎯 Roll-Off Format (Stepladder)</h3>
-      <ul>
-        <li><strong>Game 1:</strong> 5th seed vs. 4th seed</li>
-        <li><strong>Game 2:</strong> Winner vs. 3rd seed</li>
-        <li><strong>Game 3:</strong> Winner vs. 2nd seed</li>
-        <li><strong>Championship Match:</strong> Winner vs. 1st seed</li>
-      </ul>
-      <p><strong>Tiebreakers:</strong> Frame-by-frame roll-off until a winner is determined.</p>
-      <p><strong>No-Show Finalist:</strong> Any qualified finalist who cannot attend the Roll-Off forfeits their spot and is placed 5th.</p>
-    </div>
+        <!-- 🎯 Roll-Off Format (Stepladder) -->
+        <div class="info-card">
+          <h3>🎯 Roll-Off Format (Stepladder)</h3>
+          <ul>
+            <li><strong>Game 1:</strong> 5th seed vs. 4th seed</li>
+            <li><strong>Game 2:</strong> Winner vs. 3rd seed</li>
+            <li><strong>Game 3:</strong> Winner vs. 2nd seed</li>
+            <li><strong>Championship Match:</strong> Winner vs. 1st seed</li>
+          </ul>
+          <p><strong>Tiebreakers:</strong> Frame-by-frame roll-off until a winner is determined.</p>
+          <p><strong>No-Show Finalist:</strong> Any qualified finalist who cannot attend the Roll-Off forfeits their spot and is placed 5th.</p>
+        </div>
 
-    <!-- 💰 Prize info card with link to full tab -->
-    <div class="info-card">
-      <h3>💰 Prize Structure</h3>
-      <p>See full payouts for Roll-Offs and Season Points Leaders.</p>
-      <button class="btn" type="button" onclick="showTab('prize-structure')">View Full Prize Structure →</button>
+        <!-- 💰 Prize info card with link to full tab -->
+        <div class="info-card">
+          <h3>💰 Prize Structure</h3>
+          <p>See full payouts for Roll-Offs and Season Points Leaders.</p>
+          <button class="btn" type="button" onclick="showTab('prize-structure')">View Full Prize Structure →</button>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
     <!-- Prize Structure Tab -->
     <div id="prize-structure" class="tab-content" role="tabpanel" aria-labelledby="tab-prize-structure">
@@ -212,7 +218,7 @@
           <div><strong>🛠 Admin Fee:</strong> $100</div>
         </div>
 
-       <table class="results-table">
+        <table class="results-table">
           <thead>
             <tr>
               <th>Place</th>
@@ -254,92 +260,92 @@
 
         <div class="prize-total">
           Total Prize Pool: $5,760 (based on 32 bowlers)<br>
-        Note: Seeding is based on <em>total points earned during the season</em>, and in the 
-  event of a tie, <em>total pins for the season</em> will decide placement.
+          Note: Seeding is based on <em>total points earned during the season</em>, and in the 
+          event of a tie, <em>total pins for the season</em> will decide placement.
         </div>
       </div>
     </div>
 
     <!-- Side Pots Tab -->
-<div id="side-pots" class="tab-content" role="tabpanel" aria-labelledby="tab-side-pots">
-  <div class="card">
-    <h2>Side Pots</h2>
-    <iframe
-      class="embed-frame"
-      src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRW-8PWwb8eq9hHlD_EBXJvECgoE7yiSFKpR_uthDDEMN6ayutPvM0YXt6BjNpObA/pubhtml?gid=356114069&single=true"
-      width="100%"
-      height="400"
-      frameborder="0"
-      scrolling="no"
-      allowfullscreen
-    ></iframe>
-  </div>
-</div>
+    <div id="side-pots" class="tab-content" role="tabpanel" aria-labelledby="tab-side-pots">
+      <div class="card">
+        <h2>Side Pots</h2>
+        <iframe
+          class="embed-frame"
+          src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRW-8PWwb8eq9hHlD_EBXJvECgoE7yiSFKpR_uthDDEMN6ayutPvM0YXt6BjNpObA/pubhtml?gid=356114069&single=true"
+          width="100%"
+          height="400"
+          frameborder="0"
+          scrolling="no"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </div>
 
-<!-- HCP Brackets Tab -->
-<div id="hcp-brackets" class="tab-content" role="tabpanel" aria-labelledby="tab-hcp-brackets">
-  <div class="card">
-    <h2>HCP Brackets</h2>
-    <iframe
-      class="embed-frame"
-      src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRW-8PWwb8eq9hHlD_EBXJvECgoE7yiSFKpR_uthDDEMN6ayutPvM0YXt6BjNpObA/pubhtml?gid=1349358431&single=true&widget=true&headers=false"
-      width="100%"
-      height="400"
-      frameborder="0"
-      scrolling="no"
-      allowfullscreen
-    ></iframe>
-  </div>
-</div>
+    <!-- HCP Brackets Tab -->
+    <div id="hcp-brackets" class="tab-content" role="tabpanel" aria-labelledby="tab-hcp-brackets">
+      <div class="card">
+        <h2>HCP Brackets</h2>
+        <iframe
+          class="embed-frame"
+          src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRW-8PWwb8eq9hHlD_EBXJvECgoE7yiSFKpR_uthDDEMN6ayutPvM0YXt6BjNpObA/pubhtml?gid=1349358431&single=true&widget=true&headers=false"
+          width="100%"
+          height="400"
+          frameborder="0"
+          scrolling="no"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </div>
 
     <!-- HCP Rev Brackets Tab -->
-<div id="hcp-rev-brackets" class="tab-content" role="tabpanel" aria-labelledby="tab-hcp-rev-brackets">
-  <div class="card">
-    <h2>HCP Rev Brackets</h2>
-    <iframe
-      class="embed-frame"
-      src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRW-8PWwb8eq9hHlD_EBXJvECgoE7yiSFKpR_uthDDEMN6ayutPvM0YXt6BjNpObA/pubhtml?gid=1182188916&single=true"
-      width="100%"
-      height="400"
-      frameborder="0"
-      scrolling="no"
-      allowfullscreen
-    ></iframe>
-  </div>
-</div> 
+    <div id="hcp-rev-brackets" class="tab-content" role="tabpanel" aria-labelledby="tab-hcp-rev-brackets">
+      <div class="card">
+        <h2>HCP Rev Brackets</h2>
+        <iframe
+          class="embed-frame"
+          src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRW-8PWwb8eq9hHlD_EBXJvECgoE7yiSFKpR_uthDDEMN6ayutPvM0YXt6BjNpObA/pubhtml?gid=1182188916&single=true"
+          width="100%"
+          height="400"
+          frameborder="0"
+          scrolling="no"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </div>
 
     <!-- SCR Brackets Tab -->
-<div id="scr-brackets" class="tab-content" role="tabpanel" aria-labelledby="tab-scr-brackets">
-  <div class="card">
-    <h2>SCR Brackets</h2>
-    <iframe
-      class="embed-frame"
-      src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRW-8PWwb8eq9hHlD_EBXJvECgoE7yiSFKpR_uthDDEMN6ayutPvM0YXt6BjNpObA/pubhtml?gid=1170494467&single=true"
-      width="100%"
-      height="400"
-      frameborder="0"
-      scrolling="no"
-      allowfullscreen
-    ></iframe>
-  </div>
-</div>
+    <div id="scr-brackets" class="tab-content" role="tabpanel" aria-labelledby="tab-scr-brackets">
+      <div class="card">
+        <h2>SCR Brackets</h2>
+        <iframe
+          class="embed-frame"
+          src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRW-8PWwb8eq9hHlD_EBXJvECgoE7yiSFKpR_uthDDEMN6ayutPvM0YXt6BjNpObA/pubhtml?gid=1170494467&single=true"
+          width="100%"
+          height="400"
+          frameborder="0"
+          scrolling="no"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </div>
 
     <!-- Final Payouts Tab -->
-<div id="payouts" class="tab-content" role="tabpanel" aria-labelledby="tab-payouts">
-  <div class="card">
-    <h2>Weekly Payouts</h2>
-    <iframe
-      class="embed-frame"
-      src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRW-8PWwb8eq9hHlD_EBXJvECgoE7yiSFKpR_uthDDEMN6ayutPvM0YXt6BjNpObA/pubhtml?gid=1225306826&single=true"
-      width="100%"
-      height="400"
-      frameborder="0"
-      scrolling="no"
-      allowfullscreen
-    ></iframe>
-  </div>
-</div>
-    
+    <div id="payouts" class="tab-content" role="tabpanel" aria-labelledby="tab-payouts">
+      <div class="card">
+        <h2>Weekly Payouts</h2>
+        <iframe
+          class="embed-frame"
+          src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRW-8PWwb8eq9hHlD_EBXJvECgoE7yiSFKpR_uthDDEMN6ayutPvM0YXt6BjNpObA/pubhtml?gid=1225306826&single=true"
+          width="100%"
+          height="400"
+          frameborder="0"
+          scrolling="no"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </div>
+
   </div> <!-- closes .container -->
 
   <script defer src="script.js"></script>
