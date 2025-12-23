@@ -1,7 +1,14 @@
 // ===============================
 // CONFIG: Google Sheet CSV URL
 // ===============================
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS2B7Nwb1-bJ-hxu7Py10mcjPNURFulI2R-GDsMA4WnUOQmBxGLmtKBbUXpcw2njhS8flvRotMoPOUR/pub?gid=0&single=true&output=csv';
+const CSV_URL =
+  'https://docs.google.com/spreadsheets/d/e/2PACX-1vS2B7Nwb1-bJ-hxu7Py10mcjPNURFulI2R-GDsMA4WnUOQmBxGLmtKBbUXpcw2njhS8flvRotMoPOUR/pub?gid=0&single=true&output=csv';
+
+// ===============================
+// FIRST HALF / SECOND HALF SETTINGS
+// ===============================
+const FIRST_HALF_END_WEEK = 18;                 // Week 18 ends the 1st half (Position Round #1)
+const FIRST_HALF_WINNER_NAME = 'Cesar Padilla'; // Asterisk goes on this name
 
 // State
 let weeklyResults = {}; // { "1": [ {bowler1, scores1:[..], bowler2, scores2:[..]} ], ... }
@@ -20,26 +27,35 @@ async function fetchAllResults() {
     if (!rows.length) return;
 
     const header = rows.shift().map(h => h.toLowerCase());
-    const idx = Object.fromEntries(header.map((h,i)=>[h, i]));
+    const idx = Object.fromEntries(header.map((h, i) => [h, i]));
 
     // Expected columns
-    const needed = ['week','bowler1','g1','g2','g3','bowler2','h1','h2','h3'];
+    const needed = ['week', 'bowler1', 'g1', 'g2', 'g3', 'bowler2', 'h1', 'h2', 'h3'];
     const hasAll = needed.every(k => idx[k] !== undefined);
-    if (!hasAll) { console.error('CSV header missing required columns:', header); return; }
+    if (!hasAll) {
+      console.error('CSV header missing required columns:', header);
+      return;
+    }
 
     for (const r of rows) {
       const w = String(r[idx.week]);
       const bowler1 = r[idx.bowler1];
-      const g1 = parseInt(r[idx.g1],10), g2 = parseInt(r[idx.g2],10), g3 = parseInt(r[idx.g3],10);
+      const g1 = parseInt(r[idx.g1], 10),
+        g2 = parseInt(r[idx.g2], 10),
+        g3 = parseInt(r[idx.g3], 10);
       const bowler2 = r[idx.bowler2];
-      const h1 = parseInt(r[idx.h1],10), h2 = parseInt(r[idx.h2],10), h3 = parseInt(r[idx.h3],10);
+      const h1 = parseInt(r[idx.h1], 10),
+        h2 = parseInt(r[idx.h2], 10),
+        h3 = parseInt(r[idx.h3], 10);
       if (!w || !bowler1 || !bowler2) continue;
-      if ([g1,g2,g3,h1,h2,h3].some(n => Number.isNaN(n))) continue;
+      if ([g1, g2, g3, h1, h2, h3].some(n => Number.isNaN(n))) continue;
 
       if (!weeklyResults[w]) weeklyResults[w] = [];
       weeklyResults[w].push({
-        bowler1, scores1: [g1,g2,g3],
-        bowler2, scores2: [h1,h2,h3]
+        bowler1,
+        scores1: [g1, g2, g3],
+        bowler2,
+        scores2: [h1, h2, h3],
       });
     }
   } catch (e) {
@@ -53,7 +69,19 @@ async function fetchAllResults() {
 function resultsThroughWeek(weekNumber) {
   const out = {};
   for (const [w, matches] of Object.entries(weeklyResults)) {
-    if (parseInt(w,10) <= weekNumber) out[w] = matches;
+    if (parseInt(w, 10) <= weekNumber) out[w] = matches;
+  }
+  return out;
+}
+
+// Build results object for a week range (inclusive)
+function resultsBetweenWeeks(startWeek, endWeek) {
+  const out = {};
+  const s = Number(startWeek);
+  const e = Number(endWeek);
+  for (const [w, matches] of Object.entries(weeklyResults)) {
+    const wn = parseInt(w, 10);
+    if (wn >= s && wn <= e) out[w] = matches;
   }
   return out;
 }
@@ -63,10 +91,6 @@ function splitPointsOnTie(a, b) {
   if (a > b) return [1, 0];
   if (b > a) return [0, 1];
   return [0.5, 0.5];
-}
-
-function sum(arr) {
-  return (arr || []).reduce((t, n) => t + (Number(n) || 0), 0);
 }
 
 // >>> NEW: read the selected standings week / fallback to global currentWeek
@@ -81,19 +105,21 @@ function getSelectedStandingsWeek() {
 function computeStandingsFrom(resultsByWeek) {
   const map = new Map();
   const ensure = (name) => {
-    if (!map.has(name)) map.set(name, { 
-      name, 
-      points: 0, 
-      games: [], 
-      series: [], 
-      totalPinfall: 0 
-    });
+    if (!map.has(name))
+      map.set(name, {
+        name,
+        points: 0,
+        games: [],
+        series: [],
+        totalPinfall: 0,
+      });
     return map.get(name);
   };
 
-  Object.values(resultsByWeek).forEach(matches => {
+  Object.values(resultsByWeek).forEach((matches) => {
     (matches || []).forEach(({ bowler1, scores1, bowler2, scores2 }) => {
-      const a = ensure(bowler1), b = ensure(bowler2);
+      const a = ensure(bowler1),
+        b = ensure(bowler2);
 
       // per-game points (HALF-POINT TIE)
       for (let i = 0; i < 3; i++) {
@@ -103,17 +129,19 @@ function computeStandingsFrom(resultsByWeek) {
       }
 
       // series sums
-      const s1 = scores1.reduce((x,y)=>x+y,0);
-      const s2 = scores2.reduce((x,y)=>x+y,0);
+      const s1 = scores1.reduce((x, y) => x + y, 0);
+      const s2 = scores2.reduce((x, y) => x + y, 0);
 
       // series point (HALF-POINT TIE)
       const [sa, sb] = splitPointsOnTie(s1, s2);
-      a.points += sa; 
+      a.points += sa;
       b.points += sb;
 
       // stats
-      a.games.push(...scores1); b.games.push(...scores2);
-      a.series.push(s1);        b.series.push(s2);
+      a.games.push(...scores1);
+      b.games.push(...scores2);
+      a.series.push(s1);
+      b.series.push(s2);
 
       // total pinfall (sum of all games across weeks)
       a.totalPinfall += s1;
@@ -121,18 +149,18 @@ function computeStandingsFrom(resultsByWeek) {
     });
   });
 
-  return Array.from(map.values()).map(p => {
-    const total = p.games.reduce((x,y)=>x+y,0);
+  return Array.from(map.values()).map((p) => {
+    const total = p.games.reduce((x, y) => x + y, 0);
     const avg = p.games.length ? Math.round(total / p.games.length) : 0;
     const highG = p.games.length ? Math.max(...p.games) : 0;
     const highS = p.series.length ? Math.max(...p.series) : 0;
-    return { 
-      name: p.name, 
-      points: p.points, 
-      avg, 
-      highGame: highG, 
+    return {
+      name: p.name,
+      points: p.points,
+      avg,
+      highGame: highG,
       highSeries: highS,
-      totalPinfall: p.totalPinfall
+      totalPinfall: p.totalPinfall,
     };
   }).sort((a, b) => {
     // 1) Points (desc), 2) Total Pinfall (desc), 3) Name (asc)
@@ -140,6 +168,70 @@ function computeStandingsFrom(resultsByWeek) {
     if (b.totalPinfall !== a.totalPinfall) return b.totalPinfall - a.totalPinfall;
     return String(a.name).localeCompare(String(b.name));
   });
+}
+
+// Convert standings array into a Map(name -> row)
+function standingsToMap(arr) {
+  const m = new Map();
+  (arr || []).forEach((r) => m.set(r.name, r));
+  return m;
+}
+
+// Winner display helper
+function formatBowlerNameForStandings(name) {
+  const clean = String(name || '').trim();
+  return clean === FIRST_HALF_WINNER_NAME ? `${clean}*` : clean;
+}
+
+// Build the "Current Standings" rows with 1H / 2H / Total + season-to-date stats
+function computeSplitStandings(upToWeek) {
+  const wk = Number(upToWeek);
+  if (!wk || Number.isNaN(wk) || wk < 1) return [];
+
+  // 1st half points are always weeks 1..min(wk, FIRST_HALF_END_WEEK)
+  const firstEnd = Math.min(wk, FIRST_HALF_END_WEEK);
+  const firstHalfResults = resultsBetweenWeeks(1, firstEnd);
+
+  // 2nd half points are weeks (FIRST_HALF_END_WEEK+1)..wk (only if wk beyond first half)
+  const secondHalfResults =
+    wk > FIRST_HALF_END_WEEK ? resultsBetweenWeeks(FIRST_HALF_END_WEEK + 1, wk) : {};
+
+  // season-to-date stats (high game/series/pinfall) through wk
+  const seasonResults = resultsThroughWeek(wk);
+
+  const firstHalf = standingsToMap(computeStandingsFrom(firstHalfResults));
+  const secondHalf = standingsToMap(computeStandingsFrom(secondHalfResults));
+  const season = standingsToMap(computeStandingsFrom(seasonResults));
+
+  // Merge by season participants (everyone who has appeared up to wk)
+  const out = [];
+  for (const [name, seasonRow] of season.entries()) {
+    const fh = firstHalf.get(name);
+    const sh = secondHalf.get(name);
+
+    const firstHalfPts = Number(fh?.points ?? 0);
+    const secondHalfPts = Number(sh?.points ?? 0);
+    const totalPts = firstHalfPts + secondHalfPts;
+
+    out.push({
+      name,
+      firstHalfPts,
+      secondHalfPts,
+      totalPts,
+      highGame: seasonRow.highGame,
+      highSeries: seasonRow.highSeries,
+      totalPinfall: seasonRow.totalPinfall,
+    });
+  }
+
+  // Sort: Total Pts desc, Total Pinfall desc, Name asc
+  out.sort((a, b) => {
+    if (b.totalPts !== a.totalPts) return b.totalPts - a.totalPts;
+    if (b.totalPinfall !== a.totalPinfall) return b.totalPinfall - a.totalPinfall;
+    return String(a.name).localeCompare(String(b.name));
+  });
+
+  return out;
 }
 
 // ---- Style injector (safe to keep or remove if you have these in CSS) ----
@@ -166,10 +258,10 @@ function getScoreClass(a, b) {
 
 // ---- UI ----
 function populateWeekSelectors() {
-  const weeks = Object.keys(weeklyResults).map(n => parseInt(n,10)).filter(n=>!Number.isNaN(n));
+  const weeks = Object.keys(weeklyResults).map(n => parseInt(n, 10)).filter(n => !Number.isNaN(n));
   if (!weeks.length) return;
 
-  weeks.sort((a,b)=>a-b);
+  weeks.sort((a, b) => a - b);
   const maxWeek = weeks[weeks.length - 1];
   currentWeek = maxWeek;
 
@@ -179,7 +271,7 @@ function populateWeekSelectors() {
   [currentWeekSelect, weekSelect].forEach(sel => {
     if (!sel) return;
     sel.innerHTML = weeks
-      .map(w => `<option value="${w}" ${w===maxWeek?'selected':''}>Week ${w}${w===maxWeek?' (Current)':''}</option>`)
+      .map(w => `<option value="${w}" ${w === maxWeek ? 'selected' : ''}>Week ${w}${w === maxWeek ? ' (Current)' : ''}</option>`)
       .join('');
   });
 }
@@ -191,22 +283,23 @@ function updateStandings() {
   // cumulative THROUGH the selected week
   const sel = document.getElementById('currentWeek');
   const upToWeek = parseInt(sel?.value || currentWeek, 10);
+  if (Number.isNaN(upToWeek)) return;
 
-  const filtered = resultsThroughWeek(upToWeek);
-  const computed = computeStandingsFrom(filtered);
-
-  const cap = document.getElementById('standingsCaption');
-  if (cap) cap.textContent = `Standings through Week ${upToWeek}`;
+  const computed = computeSplitStandings(upToWeek);
 
   tbody.innerHTML = '';
   computed.forEach((bowler, index) => {
     const row = document.createElement('tr');
     if (index < 5) row.classList.add('top-5');
+
+    const isFirstHalfWinner = String(bowler.name).trim() === FIRST_HALF_WINNER_NAME;
+
     row.innerHTML = `
       <td>${index + 1}</td>
-      <td>${bowler.name}</td>
-      <td>${bowler.points.toFixed(1)}</td>  <!-- HALF-POINT TIE display -->
-      <td>${bowler.avg}</td>
+      <td class="${isFirstHalfWinner ? 'winner-first-half' : ''}">${formatBowlerNameForStandings(bowler.name)}</td>
+      <td>${bowler.firstHalfPts.toFixed(1)}</td>
+      <td>${bowler.secondHalfPts.toFixed(1)}</td>
+      <td>${bowler.totalPts.toFixed(1)}</td>
       <td>${bowler.highGame}</td>
       <td>${bowler.highSeries}</td>
       <td>${bowler.totalPinfall}</td>
@@ -232,12 +325,12 @@ function loadWeeklyResults() {
 
   let html = '';
   results.forEach(match => {
-    const series1 = match.scores1.reduce((a,b)=>a+b,0);
-    const series2 = match.scores2.reduce((a,b)=>a+b,0);
+    const series1 = match.scores1.reduce((a, b) => a + b, 0);
+    const series2 = match.scores2.reduce((a, b) => a + b, 0);
 
     // (HALF-POINT TIE) per-game + series
     let points1 = 0, points2 = 0;
-    for (let i=0;i<3;i++){
+    for (let i = 0; i < 3; i++) {
       const [p1, p2] = splitPointsOnTie(match.scores1[i], match.scores2[i]);
       points1 += p1;
       points2 += p2;
@@ -358,9 +451,13 @@ window.showTab = showTab;
     const rows = [];
     let cell = '', row = [], inQ = false;
     for (let i = 0; i < text.length; i++) {
-      const c = text[i], n = text[i+1];
+      const c = text[i], n = text[i + 1];
       if (c === '"' && !inQ) { inQ = true; continue; }
-      if (c === '"' && inQ)  { if (n === '"') { cell += '"'; i++; } else { inQ = false; } continue; }
+      if (c === '"' && inQ) {
+        if (n === '"') { cell += '"'; i++; }
+        else { inQ = false; }
+        continue;
+      }
       if (c === ',' && !inQ) { row.push(cell.trim()); cell = ''; continue; }
       if ((c === '\n' || c === '\r') && !inQ) {
         if (cell.length || row.length) { row.push(cell.trim()); rows.push(row); }
@@ -379,9 +476,8 @@ window.showTab = showTab;
     if (!root) return;
 
     const toggleWrap = root.querySelector('#pairings-week-toggle');
-    theContent = null;
-    const contentEl  = root.querySelector('#pairings-content');
-    const errorEl    = root.querySelector('#pairings-error');
+    const contentEl = root.querySelector('#pairings-content');
+    const errorEl = root.querySelector('#pairings-error');
     if (!toggleWrap || !contentEl) return;
 
     try {
@@ -397,8 +493,8 @@ window.showTab = showTab;
       }
       const h = header.map(x => (x || '').toLowerCase());
       const idxWeek = h.findIndex(x => x.includes('week'));
-      const idxB1   = h.findIndex(x => x.includes('bowler') && x.includes('1'));
-      const idxB2   = h.findIndex(x => x.includes('bowler') && x.includes('2'));
+      const idxB1 = h.findIndex(x => x.includes('bowler') && x.includes('1'));
+      const idxB2 = h.findIndex(x => x.includes('bowler') && x.includes('2'));
       if (idxWeek < 0 || idxB1 < 0 || idxB2 < 0) {
         throw new Error('CSV headers must be: Week, Bowler 1, Bowler 2.');
       }
@@ -415,26 +511,26 @@ window.showTab = showTab;
         (groups[week] ||= []).push({ b1, b2 });
       }
 
-      const weeks = Object.keys(groups).map(Number).sort((a,b)=>a-b);
+      const weeks = Object.keys(groups).map(Number).sort((a, b) => a - b);
       if (!weeks.length) throw new Error('No pairings found.');
 
       // >>> SYNC: Prefer the Standings' selected week; clamp to available pairings weeks
       const standingsWeek = getSelectedStandingsWeek();
-      let currentWeek;
+      let currentWeekLocal;
       if (standingsWeek != null) {
         const minW = weeks[0];
         const maxW = weeks[weeks.length - 1];
-        currentWeek = Math.min(Math.max(standingsWeek, minW), maxW);
+        currentWeekLocal = Math.min(Math.max(standingsWeek, minW), maxW);
       } else if (urlWeekParam && weeks.includes(+urlWeekParam)) {
-        currentWeek = +urlWeekParam; // fallback: explicit URL param
+        currentWeekLocal = +urlWeekParam; // fallback: explicit URL param
       } else {
         // final fallback: last week with at least one fully filled matchup
         const isFilled = m => {
           const bad = s => !s || s.toUpperCase() === 'TBD' || s === '-';
           return !bad(m.b1) && !bad(m.b2);
         };
-        currentWeek = weeks[0];
-        for (const w of weeks) if (groups[w].some(isFilled)) currentWeek = w;
+        currentWeekLocal = weeks[0];
+        for (const w of weeks) if (groups[w].some(isFilled)) currentWeekLocal = w;
       }
 
       // ---- Build the dropdown (matches Weekly Results look; no "(Current)") ----
@@ -452,7 +548,7 @@ window.showTab = showTab;
         opt.textContent = `Week ${week}`;
         weekSelect.appendChild(opt);
       });
-      weekSelect.value = String(currentWeek);
+      weekSelect.value = String(currentWeekLocal);
       weekSelect.addEventListener('change', () => showWeek(Number(weekSelect.value)));
       toggleWrap.appendChild(weekSelect);
 
@@ -462,7 +558,7 @@ window.showTab = showTab;
         const sec = document.createElement('section');
         sec.id = `pairings-week-${week}`;
         sec.className = 'pairings-week';
-        sec.hidden = (week !== currentWeek);
+        sec.hidden = (week !== currentWeekLocal);
 
         const table = document.createElement('table');
         table.className = 'pairings-table';
@@ -492,9 +588,9 @@ window.showTab = showTab;
         contentEl.appendChild(sec);
       });
 
-      // Hide future weeks (> currentWeek) by default
+      // Hide future weeks (> currentWeekLocal) by default
       weeks.forEach(w => {
-        if (w > currentWeek) {
+        if (w > currentWeekLocal) {
           const sec = document.getElementById(`pairings-week-${w}`);
           if (sec) sec.hidden = true;
         }
