@@ -514,24 +514,26 @@ window.showTab = showTab;
       const weeks = Object.keys(groups).map(Number).sort((a, b) => a - b);
       if (!weeks.length) throw new Error('No pairings found.');
 
-      // >>> SYNC: Prefer the Standings' selected week; clamp to available pairings weeks
-      const standingsWeek = getSelectedStandingsWeek();
-      let currentWeekLocal;
-      if (standingsWeek != null) {
-        const minW = weeks[0];
-        const maxW = weeks[weeks.length - 1];
-        currentWeekLocal = Math.min(Math.max(standingsWeek, minW), maxW);
-      } else if (urlWeekParam && weeks.includes(+urlWeekParam)) {
-        currentWeekLocal = +urlWeekParam; // fallback: explicit URL param
-      } else {
-        // final fallback: last week with at least one fully filled matchup
-        const isFilled = m => {
-          const bad = s => !s || s.toUpperCase() === 'TBD' || s === '-';
-          return !bad(m.b1) && !bad(m.b2);
-        };
-        currentWeekLocal = weeks[0];
-        for (const w of weeks) if (groups[w].some(isFilled)) currentWeekLocal = w;
-      }
+      // >>> SYNC: Prefer the Standings' selected week + 1; clamp to available pairings weeks
+const standingsWeek = getSelectedStandingsWeek();
+let currentWeekLocal;
+
+if (standingsWeek != null) {
+  const minW = weeks[0];
+  const maxW = weeks[weeks.length - 1];
+  const plusOne = standingsWeek + 1; // <-- key change
+  currentWeekLocal = Math.min(Math.max(plusOne, minW), maxW);
+} else if (urlWeekParam && weeks.includes(+urlWeekParam)) {
+  currentWeekLocal = +urlWeekParam; // fallback: explicit URL param
+} else {
+  // final fallback: last week with at least one fully filled matchup
+  const isFilled = m => {
+    const bad = s => !s || s.toUpperCase() === 'TBD' || s === '-';
+    return !bad(m.b1) && !bad(m.b2);
+  };
+  currentWeekLocal = weeks[0];
+  for (const w of weeks) if (groups[w].some(isFilled)) currentWeekLocal = w;
+}
 
       // ---- Build the dropdown (matches Weekly Results look; no "(Current)") ----
       toggleWrap.innerHTML = '';
