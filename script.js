@@ -93,7 +93,7 @@ function splitPointsOnTie(a, b) {
   return [0.5, 0.5];
 }
 
-// >>> NEW: read the selected standings week / fallback to global currentWeek
+// >>> read the selected standings week / fallback to global currentWeek
 function getSelectedStandingsWeek() {
   const sel = document.getElementById('currentWeek');
   if (sel && sel.value) return parseInt(sel.value, 10);
@@ -224,8 +224,9 @@ function computeSplitStandings(upToWeek) {
     });
   }
 
-  // Sort: Total Pts desc, Total Pinfall desc, Name asc
+  // ✅ NEW SORT: 2nd Half Pts desc, then Total Pts desc, then Total Pinfall desc, then Name asc
   out.sort((a, b) => {
+    if (b.secondHalfPts !== a.secondHalfPts) return b.secondHalfPts - a.secondHalfPts;
     if (b.totalPts !== a.totalPts) return b.totalPts - a.totalPts;
     if (b.totalPinfall !== a.totalPinfall) return b.totalPinfall - a.totalPinfall;
     return String(a.name).localeCompare(String(b.name));
@@ -515,25 +516,25 @@ window.showTab = showTab;
       if (!weeks.length) throw new Error('No pairings found.');
 
       // >>> SYNC: Prefer the Standings' selected week + 1; clamp to available pairings weeks
-const standingsWeek = getSelectedStandingsWeek();
-let currentWeekLocal;
+      const standingsWeek = getSelectedStandingsWeek();
+      let currentWeekLocal;
 
-if (standingsWeek != null) {
-  const minW = weeks[0];
-  const maxW = weeks[weeks.length - 1];
-  const plusOne = standingsWeek + 1; // <-- key change
-  currentWeekLocal = Math.min(Math.max(plusOne, minW), maxW);
-} else if (urlWeekParam && weeks.includes(+urlWeekParam)) {
-  currentWeekLocal = +urlWeekParam; // fallback: explicit URL param
-} else {
-  // final fallback: last week with at least one fully filled matchup
-  const isFilled = m => {
-    const bad = s => !s || s.toUpperCase() === 'TBD' || s === '-';
-    return !bad(m.b1) && !bad(m.b2);
-  };
-  currentWeekLocal = weeks[0];
-  for (const w of weeks) if (groups[w].some(isFilled)) currentWeekLocal = w;
-}
+      if (standingsWeek != null) {
+        const minW = weeks[0];
+        const maxW = weeks[weeks.length - 1];
+        const plusOne = standingsWeek + 1; // <-- key change
+        currentWeekLocal = Math.min(Math.max(plusOne, minW), maxW);
+      } else if (urlWeekParam && weeks.includes(+urlWeekParam)) {
+        currentWeekLocal = +urlWeekParam; // fallback: explicit URL param
+      } else {
+        // final fallback: last week with at least one fully filled matchup
+        const isFilled = m => {
+          const bad = s => !s || s.toUpperCase() === 'TBD' || s === '-';
+          return !bad(m.b1) && !bad(m.b2);
+        };
+        currentWeekLocal = weeks[0];
+        for (const w of weeks) if (groups[w].some(isFilled)) currentWeekLocal = w;
+      }
 
       // ---- Build the dropdown (matches Weekly Results look; no "(Current)") ----
       toggleWrap.innerHTML = '';
@@ -617,18 +618,18 @@ if (standingsWeek != null) {
       }
 
       // >>> SYNC: update Pairings when Standings dropdown changes (Standings week + 1)
-const standingsSelect = document.getElementById('currentWeek');
-if (standingsSelect) {
-  standingsSelect.addEventListener('change', () => {
-    const w = getSelectedStandingsWeek();
-    if (w == null) return;
-    const minW = weeks[0];
-    const maxW = weeks[weeks.length - 1];
-    const plusOne = w + 1; // <-- key change
-    const clamped = Math.min(Math.max(plusOne, minW), maxW);
-    showWeek(clamped);
-  });
-}
+      const standingsSelect = document.getElementById('currentWeek');
+      if (standingsSelect) {
+        standingsSelect.addEventListener('change', () => {
+          const w = getSelectedStandingsWeek();
+          if (w == null) return;
+          const minW = weeks[0];
+          const maxW = weeks[weeks.length - 1];
+          const plusOne = w + 1; // <-- key change
+          const clamped = Math.min(Math.max(plusOne, minW), maxW);
+          showWeek(clamped);
+        });
+      }
 
     } catch (err) {
       console.error(err);
