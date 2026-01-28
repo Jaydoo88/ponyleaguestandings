@@ -23,7 +23,10 @@ async function fetchAllResults() {
     const text = await res.text();
 
     // Basic CSV parse (assumes no commas inside fields)
-    const rows = text.trim().split(/\r?\n/).map(r => r.split(',').map(s => s.trim()));
+    const rows = text
+      .trim()
+      .split(/\r?\n/)
+      .map(r => r.split(',').map(s => s.trim()));
     if (!rows.length) return;
 
     const header = rows.shift().map(h => h.toLowerCase());
@@ -47,6 +50,7 @@ async function fetchAllResults() {
       const h1 = parseInt(r[idx.h1], 10),
         h2 = parseInt(r[idx.h2], 10),
         h3 = parseInt(r[idx.h3], 10);
+
       if (!w || !bowler1 || !bowler2) continue;
       if ([g1, g2, g3, h1, h2, h3].some(n => Number.isNaN(n))) continue;
 
@@ -118,8 +122,8 @@ function computeStandingsFrom(resultsByWeek) {
 
   Object.values(resultsByWeek).forEach((matches) => {
     (matches || []).forEach(({ bowler1, scores1, bowler2, scores2 }) => {
-      const a = ensure(bowler1),
-        b = ensure(bowler2);
+      const a = ensure(bowler1);
+      const b = ensure(bowler2);
 
       // per-game points (HALF-POINT TIE)
       for (let i = 0; i < 3; i++) {
@@ -149,25 +153,27 @@ function computeStandingsFrom(resultsByWeek) {
     });
   });
 
-  return Array.from(map.values()).map((p) => {
-    const total = p.games.reduce((x, y) => x + y, 0);
-    const avg = p.games.length ? Math.round(total / p.games.length) : 0;
-    const highG = p.games.length ? Math.max(...p.games) : 0;
-    const highS = p.series.length ? Math.max(...p.series) : 0;
-    return {
-      name: p.name,
-      points: p.points,
-      avg,
-      highGame: highG,
-      highSeries: highS,
-      totalPinfall: p.totalPinfall,
-    };
-  }).sort((a, b) => {
-    // 1) Points (desc), 2) Total Pinfall (desc), 3) Name (asc)
-    if (b.points !== a.points) return b.points - a.points;
-    if (b.totalPinfall !== a.totalPinfall) return b.totalPinfall - a.totalPinfall;
-    return String(a.name).localeCompare(String(b.name));
-  });
+  return Array.from(map.values())
+    .map((p) => {
+      const total = p.games.reduce((x, y) => x + y, 0);
+      const avg = p.games.length ? Math.round(total / p.games.length) : 0;
+      const highG = p.games.length ? Math.max(...p.games) : 0;
+      const highS = p.series.length ? Math.max(...p.series) : 0;
+      return {
+        name: p.name,
+        points: p.points,
+        avg,
+        highGame: highG,
+        highSeries: highS,
+        totalPinfall: p.totalPinfall,
+      };
+    })
+    .sort((a, b) => {
+      // 1) Points (desc), 2) Total Pinfall (desc), 3) Name (asc)
+      if (b.points !== a.points) return b.points - a.points;
+      if (b.totalPinfall !== a.totalPinfall) return b.totalPinfall - a.totalPinfall;
+      return String(a.name).localeCompare(String(b.name));
+    });
 }
 
 // Convert standings array into a Map(name -> row)
@@ -213,34 +219,26 @@ function computeSplitStandings(upToWeek) {
     const secondHalfPts = Number(sh?.points ?? 0);
     const totalPts = firstHalfPts + secondHalfPts;
 
-    // ✅ NEW: 2nd-half pinfall (used for tie-breaks in 2nd-half points)
-    const secondHalfPins = Number(sh?.totalPinfall ?? 0);
-
     out.push({
       name,
       firstHalfPts,
       secondHalfPts,
       totalPts,
-      secondHalfPins, // ✅ add this
       highGame: seasonRow.highGame,
       highSeries: seasonRow.highSeries,
       totalPinfall: seasonRow.totalPinfall,
     });
   }
 
- // ✅ UPDATED SORT:
-// 1) 2nd Half Pts desc
-// 2) 2nd Half Pins desc (higher pins first)
-// 3) Total Pts desc
-// 4) Total Pinfall desc
-// 5) Name asc
-out.sort((a, b) => {
-  if (b.secondHalfPts !== a.secondHalfPts) return b.secondHalfPts - a.secondHalfPts;
-  if (b.secondHalfPins !== a.secondHalfPins) return b.secondHalfPins - a.secondHalfPins; // ✅ higher first
-  if (b.totalPts !== a.totalPts) return b.totalPts - a.totalPts;
-  if (b.totalPinfall !== a.totalPinfall) return b.totalPinfall - a.totalPinfall;
-  return String(a.name).localeCompare(String(b.name));
-});
+  // ✅ SORT FIX:
+  // If 2nd Half points are tied, sort by TOTAL PINFALL (higher pins first),
+  // then total points, then name.
+  out.sort((a, b) => {
+    if (b.secondHalfPts !== a.secondHalfPts) return b.secondHalfPts - a.secondHalfPts;
+    if (b.totalPinfall !== a.totalPinfall) return b.totalPinfall - a.totalPinfall; // ✅ higher first
+    if (b.totalPts !== a.totalPts) return b.totalPts - a.totalPts;
+    return String(a.name).localeCompare(String(b.name));
+  });
 
   return out;
 }
@@ -269,7 +267,9 @@ function getScoreClass(a, b) {
 
 // ---- UI ----
 function populateWeekSelectors() {
-  const weeks = Object.keys(weeklyResults).map(n => parseInt(n, 10)).filter(n => !Number.isNaN(n));
+  const weeks = Object.keys(weeklyResults)
+    .map(n => parseInt(n, 10))
+    .filter(n => !Number.isNaN(n));
   if (!weeks.length) return;
 
   weeks.sort((a, b) => a - b);
@@ -351,15 +351,19 @@ function loadWeeklyResults() {
     points2 += sp2;
 
     // Build per-game score spans with win/tie classes
-    const row1Scores = match.scores1.map((s, i) => {
-      const cls = getScoreClass(Number(s), Number(match.scores2[i]));
-      return `<span class="score score-cell ${cls}">${s}</span>`;
-    }).join('');
+    const row1Scores = match.scores1
+      .map((s, i) => {
+        const cls = getScoreClass(Number(s), Number(match.scores2[i]));
+        return `<span class="score score-cell ${cls}">${s}</span>`;
+      })
+      .join('');
 
-    const row2Scores = match.scores2.map((s, i) => {
-      const cls = getScoreClass(Number(s), Number(match.scores1[i]));
-      return `<span class="score score-cell ${cls}">${s}</span>`;
-    }).join('');
+    const row2Scores = match.scores2
+      .map((s, i) => {
+        const cls = getScoreClass(Number(s), Number(match.scores1[i]));
+        return `<span class="score score-cell ${cls}">${s}</span>`;
+      })
+      .join('');
 
     // Series class
     const series1Cls = getScoreClass(series1, series2);
@@ -429,10 +433,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadWeeklyResults();
 
   const cw = document.getElementById('currentWeek');
-  if (cw) cw.addEventListener('change', () => {
-    currentWeek = parseInt(cw.value, 10);
-    updateStandings(); // recompute standings through selected week
-  });
+  if (cw) {
+    cw.addEventListener('change', () => {
+      currentWeek = parseInt(cw.value, 10);
+      updateStandings(); // recompute standings through selected week
+    });
+  }
 
   const ws = document.getElementById('weekSelect');
   if (ws) ws.addEventListener('change', loadWeeklyResults);
@@ -532,10 +538,10 @@ window.showTab = showTab;
       if (standingsWeek != null) {
         const minW = weeks[0];
         const maxW = weeks[weeks.length - 1];
-        const plusOne = standingsWeek + 1; // <-- key change
+        const plusOne = standingsWeek + 1;
         currentWeekLocal = Math.min(Math.max(plusOne, minW), maxW);
       } else if (urlWeekParam && weeks.includes(+urlWeekParam)) {
-        currentWeekLocal = +urlWeekParam; // fallback: explicit URL param
+        currentWeekLocal = +urlWeekParam;
       } else {
         // final fallback: last week with at least one fully filled matchup
         const isFilled = m => {
@@ -546,7 +552,7 @@ window.showTab = showTab;
         for (const w of weeks) if (groups[w].some(isFilled)) currentWeekLocal = w;
       }
 
-      // ---- Build the dropdown (matches Weekly Results look; no "(Current)") ----
+      // ---- Build the dropdown ----
       toggleWrap.innerHTML = '';
       const label = document.createElement('label');
       label.setAttribute('for', 'pairings-week-select');
@@ -609,19 +615,16 @@ window.showTab = showTab;
         }
       });
 
-      // ---- Local controller (no globals leaked) ----
+      // ---- Local controller ----
       function showWeek(week) {
-        // sync dropdown
         const sel = document.getElementById('pairings-week-select');
         if (sel) sel.value = String(week);
 
-        // toggle sections
         weeks.forEach(w => {
           const sec = document.getElementById(`pairings-week-${w}`);
           if (sec) sec.hidden = (w !== week);
         });
 
-        // (optional) keep URL param in sync
         const usp = new URLSearchParams(location.search);
         usp.set('week', String(week));
         history.replaceState(null, '', `${location.pathname}?${usp.toString()}#pairings`);
@@ -635,7 +638,7 @@ window.showTab = showTab;
           if (w == null) return;
           const minW = weeks[0];
           const maxW = weeks[weeks.length - 1];
-          const plusOne = w + 1; // <-- key change
+          const plusOne = w + 1;
           const clamped = Math.min(Math.max(plusOne, minW), maxW);
           showWeek(clamped);
         });
@@ -650,6 +653,5 @@ window.showTab = showTab;
     }
   }
 
-  // Init once the DOM is ready (safe even if the tab is hidden)
   document.addEventListener('DOMContentLoaded', initWeeklyPairings);
 })();
