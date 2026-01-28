@@ -213,20 +213,30 @@ function computeSplitStandings(upToWeek) {
     const secondHalfPts = Number(sh?.points ?? 0);
     const totalPts = firstHalfPts + secondHalfPts;
 
+    // ✅ NEW: 2nd-half pinfall (used for tie-breaks in 2nd-half points)
+    const secondHalfPins = Number(sh?.totalPinfall ?? 0);
+
     out.push({
       name,
       firstHalfPts,
       secondHalfPts,
       totalPts,
+      secondHalfPins, // ✅ add this
       highGame: seasonRow.highGame,
       highSeries: seasonRow.highSeries,
       totalPinfall: seasonRow.totalPinfall,
     });
   }
 
-  // ✅ NEW SORT: 2nd Half Pts desc, then Total Pts desc, then Total Pinfall desc, then Name asc
+  // ✅ UPDATED SORT:
+  // 1) 2nd Half Pts desc
+  // 2) 2nd Half Pins desc (tie-break for 2nd half points)
+  // 3) Total Pts desc
+  // 4) Total Pinfall desc
+  // 5) Name asc
   out.sort((a, b) => {
     if (b.secondHalfPts !== a.secondHalfPts) return b.secondHalfPts - a.secondHalfPts;
+    if (b.secondHalfPins !== a.secondHalfPins) return b.secondHalfPins - a.secondHalfPins; // ✅ key change
     if (b.totalPts !== a.totalPts) return b.totalPts - a.totalPts;
     if (b.totalPinfall !== a.totalPinfall) return b.totalPinfall - a.totalPinfall;
     return String(a.name).localeCompare(String(b.name));
