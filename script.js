@@ -228,19 +228,19 @@ function computeSplitStandings(upToWeek) {
     });
   }
 
-  // ✅ UPDATED SORT:
-  // 1) 2nd Half Pts desc
-  // 2) 2nd Half Pins desc (tie-break for 2nd half points)
-  // 3) Total Pts desc
-  // 4) Total Pinfall desc
-  // 5) Name asc
-  out.sort((a, b) => {
-    if (b.secondHalfPts !== a.secondHalfPts) return b.secondHalfPts - a.secondHalfPts;
-    if (b.secondHalfPins !== a.secondHalfPins) return b.secondHalfPins - a.secondHalfPins; // ✅ key change
-    if (b.totalPts !== a.totalPts) return b.totalPts - a.totalPts;
-    if (b.totalPinfall !== a.totalPinfall) return b.totalPinfall - a.totalPinfall;
-    return String(a.name).localeCompare(String(b.name));
-  });
+ // ✅ UPDATED SORT:
+// 1) 2nd Half Pts desc
+// 2) 2nd Half Pins desc (higher pins first)
+// 3) Total Pts desc
+// 4) Total Pinfall desc
+// 5) Name asc
+out.sort((a, b) => {
+  if (b.secondHalfPts !== a.secondHalfPts) return b.secondHalfPts - a.secondHalfPts;
+  if (b.secondHalfPins !== a.secondHalfPins) return b.secondHalfPins - a.secondHalfPins; // ✅ higher first
+  if (b.totalPts !== a.totalPts) return b.totalPts - a.totalPts;
+  if (b.totalPinfall !== a.totalPinfall) return b.totalPinfall - a.totalPinfall;
+  return String(a.name).localeCompare(String(b.name));
+});
 
   return out;
 }
